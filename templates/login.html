@@ -1,0 +1,29 @@
+<!-- Registration/Login Page -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> Log In </title>
+        <link rel="stylesheet" type="text/css" href="../static/styles.css">
+    </head>
+
+    <body>
+        <h1>Welcome! Please Login.</h1>
+
+        <!-- Default page is login page -->
+        <form action="/login" method="post">
+            <!-- Username Section -->
+            <label for="username">Username: </label>
+            <input type="text" id="username" name="username" required>
+            <br><br>
+            <!-- Password Section -->
+            <label for="password">Password: </label>
+            <input type="password" id="password" name="password" required>
+            <br><br>
+            <!-- Button -->
+            <button class="registrationButton" type="submit" value="Login">Login</button>
+        </form>
+
+        <!-- Redirect to Signup Page-->
+        <p>Don't have an account? <a href="/signup">Sign Up</a></p>
+    </body>
+</html>
