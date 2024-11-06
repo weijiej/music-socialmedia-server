@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sign Up</title>
+        <link rel="stylesheet" type="text/css" href="../static/styles.css">
+    </head>
+
+    <body>
+        <h1>Create a New Account</h1>
+
+        <form action="/signup" method="post">
+            <!-- Username -->
+            <label for="username">Username: </label>
+            <input type="text" id="username" name="username" required>
+            <br><br>
+            <!-- Password -->
+            <label for="password">Password: </label>
+            <input type="password" id="password" name="password" required>
+            <br><br>
+            <!-- Date of Birth -->
+            <label for="DoB">Date of Birth: </label>
+            <input type="date" id="DoB" name="DoB" required>
+            <br><br>
+            <!-- Button -->
+            <button class="registrationButton" type="submit" value="Signup">Sign Up</button>
+        </form>
+
+        <!-- Redirect to Login Page -->
+        <p>Already have an account? <a href="/login">Log In</a></p>
+    </body>
+</html>
