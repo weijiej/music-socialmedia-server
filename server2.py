@@ -7,7 +7,7 @@ from flask import Flask, request, render_template, g, redirect, Response, abort
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 #flask instance
 app = Flask(__name__, template_folder=tmpl_dir)
-DATABASEURI = "postgresql://rq2139:073929@104.196.222.236/proj1part2"
+DATABASEURI = "postgresql://rq2193:073929@104.196.222.236/proj1part2"
 engine = create_engine(DATABASEURI)
 
 @app.before_request
@@ -37,18 +37,21 @@ def teardown_request(exception):
   except Exception as e:
     pass
 
+#initial page
+@app.route('/')
+def index():
+  return redirect("/login")
 
-
+#website methods
 @app.route('/login', methods=["POST", "GET"])
 def login():
   #check request type:
   if request.method == "POST":
     #Retrieve the data
     username = request.form.get("username")
-    password = request.form.get("password")
 
     #check if username is in database:
-    result = g.conn.execute(text("SELECT * FROM Users WHERE username = :username AND password = :password", {"username": username, "password": password})).fetchone()
+    result = g.conn.execute(text("SELECT * FROM Users WHERE username = :username"), {"username": username}).fetchone()
     g.conn.commit()
     if result:
       return redirect("/dashboard")
@@ -63,7 +66,6 @@ def signup():
   if request.method == "POST":
     username = request.form.get("username")
     DoB = request.form.get("DoB")
-    password = request.form.get("password")
 
     existing_user = g.conn.execute(text("SELECT * FROM users WHERE username = :username"), {"username": username}).fetchone()
     
@@ -72,7 +74,7 @@ def signup():
       return "User already exists.", 400
 
     #insert new user into the database
-    g.conn.execute(text("INSERT INTO users (username, password, DateOfBirth) VALUES (:username, :password, :DoB)"),{"username": username, "password": password, "DoB": DoB})
+    g.conn.execute(text("INSERT INTO users (username, DateOfBirth) VALUES (:username, :DoB)"),{"username": username, "DoB": DoB})
     g.conn.commit()
     return redirect("/dashboard")
   
@@ -84,9 +86,6 @@ def signup():
 @app.route('/dashboard')
 def dashboard():
   return "Welcome to your dashboard"
-
-
-
 
 if __name__ == "__main__":
   import click
