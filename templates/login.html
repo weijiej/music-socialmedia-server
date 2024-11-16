@@ -1,4 +1,3 @@
-<!-- Registration/Login Page -->
 <!DOCTYPE html>
 <html>
     <head>
@@ -8,9 +7,16 @@
 
     <body>
         <h1>Welcome! Please Login.</h1>
+        
+        <!-- Error Message -->
+        {% if error %}
+        <div style="color: red;">
+            {{ error }}
+        </div>
+        {% endif %}
 
         <!-- Default page is login page -->
-        <form action="/login" method="post">
+        <form action="/login" method="POST">
             <!-- Username Section -->
             <label for="username">Username: </label>
             <input type="text" id="username" name="username" required>

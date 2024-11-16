@@ -7,8 +7,15 @@
 
     <body>
         <h1>Create a New Account</h1>
-
-        <form action="/signup" method="post">
+        
+        <!-- Error Message -->
+        {% if error %}
+        <div style="color: red;">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form action="/signup" method="POST">
             <!-- Username -->
             <label for="username">Username: </label>
             <input type="text" id="username" name="username" required>
@@ -20,6 +27,7 @@
             <!-- Button -->
             <button class="registrationButton" type="submit" value="Signup">Sign Up</button>
         </form>
+
 
         <!-- Redirect to Login Page -->
         <p>Already have an account? <a href="/login">Log In</a></p>
