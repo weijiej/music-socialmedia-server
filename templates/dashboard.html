@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Dashboard</title>
+        <link rel="stylesheet" type="text/css" href="../static/styles.css">
+    </head>
+    
+    <h1>{{user}}'s Dashboard</h1>
+
+    <div class="posts">
+        {% for post in posts %}
+        <div class="post" style="border: 1px solid black; margin: 10px; padding: 15px; width: 300px;">
+            <h3>{{ post.song_title }}</h3>
+            <p>Artist: {{ post.artist_name }}</p>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                <button>Comment</button>
+                <button>Favorite</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</html>
