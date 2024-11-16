@@ -8,7 +8,7 @@ from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 #flask instance
-app = Flask(__name__, template_folder=tmpl_dir, static_folder = 'static')
+app = Flask(__name__, template_folder=tmpl_dir)
 DATABASEURI = "postgresql://rq2193:073929@104.196.222.236/proj1part2"
 engine = create_engine(DATABASEURI)
 
