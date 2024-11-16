@@ -3,12 +3,12 @@ import spotipy
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort
+from flask import Flask, request, render_template, g, redirect, Response, abort, session
 from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 #flask instance
-app = Flask(__name__, template_folder=tmpl_dir)
+app = Flask(__name__, template_folder=tmpl_dir, static_folder = 'static')
 DATABASEURI = "postgresql://rq2193:073929@104.196.222.236/proj1part2"
 engine = create_engine(DATABASEURI)
 
@@ -54,52 +54,100 @@ def index():
   return redirect("/login")
 
 #website methods
+#required for sessions implementation
+app.secret_key = 'test'
+
+#Log In Page
 @app.route('/login', methods=["POST", "GET"])
 def login():
-  #check request type:
-  if request.method == "POST":
-    #Retrieve the data
+    if request.method == "GET":
+        return render_template("login.html")
+        
     username = request.form.get("username")
-
-    #check if username is in database:
-    result = g.conn.execute(text("SELECT * FROM Users WHERE username = :username"), {"username": username}).fetchone()
-    g.conn.commit()
+    
+    if not username or username.strip() == "":
+        return render_template("login.html", error="Username is required"), 400
+        
+    result = g.conn.execute(
+        text("SELECT username FROM Users WHERE username = :username"),
+        {"username": username}
+    ).fetchone()
+    
     if result:
-      return redirect("/dashboard")
+        session['username'] = username  # Store username in session
+        return redirect('/dashboard')
     else:
-      return "Invalid username or password", 401
+        return render_template("login.html", error="Invalid username. Please try again or sign up."), 401
 
-  #return to blank login page
-  return render_template("login.html")
-
+#Sign Up Page
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
-  if request.method == "POST":
+    if request.method == "GET":
+        return render_template("signup.html")
+        
     username = request.form.get("username")
     DoB = request.form.get("DoB")
-
-    existing_user = g.conn.execute(text("SELECT * FROM users WHERE username = :username"), {"username": username}).fetchone()
     
-    #if the user already exists, prompt a message
+    if not username or username.strip() == "":
+        return render_template("signup.html", error="Username is required"), 400
+        
+    if not DoB:
+        return render_template("signup.html", error="Date of Birth is required"), 400
+        
+    existing_user = g.conn.execute(
+        text("SELECT username FROM users WHERE username = :username"),
+        {"username": username}
+    ).fetchone()
+    
     if existing_user:
-      return "User already exists.", 400
-
-    #insert new user into the database
-    g.conn.execute(text("INSERT INTO users (username, DateOfBirth) VALUES (:username, :DoB)"),{"username": username, "DoB": DoB})
+        return render_template("signup.html", error="Username already exists. Please choose another."), 400
+    
+    g.conn.execute(
+        text("INSERT INTO users (username, DateOfBirth) VALUES (:username, :DoB)"),
+        {"username": username, "DoB": DoB}
+    )
     g.conn.commit()
-    return redirect("/dashboard")
-  
-  #refresh to blank signup page
-  return render_template("signup.html")
+    
+    session['username'] = username  # Store username in session
+    return redirect('/dashboard')
 
-
+#User Dashboard
 @app.route('/dashboard')
 def dashboard():
-  return render_template("dashboard.html")
+    #checks for valid session
+    if 'username' not in session:
+        return redirect('/login')
+    current_user = session['username']
+
+    #query for distinct songs not currently favorited by user
+    #returns the song title and its respective artist
+    songs = g.conn.execute(text("""
+        SELECT DISTINCT s.songid, s.title, a.artistname
+        FROM songs s JOIN released_under ru ON s.songid = ru.songid
+        JOIN artists a ON a.artistid = ru.artistid
+        WHERE s.songid NOT IN (
+            SELECT f.songid
+            FROM favorites f
+            WHERE f.username = :username
+        )
+        LIMIT 10
+        """), {
+            'username':current_user
+        }).fetchall()
+    
+    posts = []
+    for song in songs:
+        posts.append({
+            'song_id': song[0],
+            'song_title': song[1],
+            'artist_name': song[2]
+        })
+
+    return render_template("dashboard.html", user=session['username'], posts=posts)
 
 if __name__ == "__main__":
   import click
-  
+
   @click.command()
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
