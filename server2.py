@@ -83,9 +83,93 @@ def signup():
 
 
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=["GET"])
 def dashboard():
   return "Welcome to your dashboard"
+
+
+  username = session.get('username')
+
+  #Fetch most liked songs for the feed
+  songs = g.conn.execute(text(
+        "SELECT Title, Likes, SongID FROM Songs ORDER BY Likes DESC LIMIT 10"
+    )).fetchall()
+
+  # Fetch user's playlists
+  user_playlists = g.conn.execute(text(
+        "SELECT PlaylistID, PlaylistName, TotalSongs FROM User_Playlists WHERE Username = :username"
+    ), {"username": username}).fetchall()
+
+  # Fetch popular artists to follow
+    popular_artists = g.conn.execute(text(
+        "SELECT ArtistName, ArtistID FROM Artists A "
+        "LEFT JOIN Follows F ON A.ArtistID = F.ArtistID "
+        "GROUP BY A.ArtistID, A.ArtistName "
+        "ORDER BY COUNT(F.Username) DESC LIMIT 5"
+    )).fetchall()
+
+    # Use the most liked songs as recommendations
+    recommendations = songs
+
+    return render_template(
+        "dashboard.html",
+        songs=songs,
+        user_playlists=user_playlists,
+        popular_artists=popular_artists,
+        recommendations=recommendations
+    )
+
+  #  This route handles the creation of playlists. Users can specify a playlist name and description.
+@app.route('/create_playlist', methods=["GET", "POST"])
+def create_playlist():
+    username = session.get('username')#ensure the user is logged in
+    if request.method == "POST":
+        playlist_name = request.form.get("playlist_name")
+        description = request.form.get("description")
+
+        #insert new playlist
+        g.conn.execute(text(
+            "INSERT INTO User_Playlists (PlaylistName, Description, Username, TotalSongs) "
+            "VALUES (:playlist_name, :description, :username, 0)"
+        ), {"playlist_name": playlist_name, "description": description, "username": username})
+        g.conn.commit()
+
+        return redirect("/dashboard")
+     return render_template("create_playlist.html")
+
+# this route diplays specific details of songs and allow user to leave comments
+
+@app.route('/song/<song_id>', methods=["GET", "POST"])
+def song_details(song_id):
+     if request.method == "POST":
+        comment_text = request.form.get("comment_text")
+        username = session.get('username')
+
+        g.conn.execute(text(
+            "INSERT INTO Posted_Comment_Reviews (CommentText, Username, SongID) "
+            "VALUES (:comment_text, :username, :song_id)"
+        ), {"comment_text": comment_text, "username": username, "song_id": song_id})
+        g.conn.commit()
+
+        #show songs' details
+
+        song = g.conn.execute(text(
+        "SELECT Title, Likes, DurationInSeconds FROM Songs WHERE SongID = :song_id"
+    ), {"song_id": song_id}).fetchone()
+
+        # comments
+
+        comments = g.conn.execute(text(
+        "SELECT CommentText, Username, Likes FROM Posted_Comment_Reviews WHERE SongID = :song_id"
+    ), {"song_id": song_id}).fetchall()
+
+    return render_template("song_details.html", song=song, comments=comments)
+
+
+
+
+
+
 
 if __name__ == "__main__":
   import click
