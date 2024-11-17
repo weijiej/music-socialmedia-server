@@ -167,34 +167,49 @@ def create_playlist():
 
 @app.route('/song/<song_id>', methods=["GET", "POST"])
 def song_details(song_id):
-     if request.method == "POST":
+    # Ensure the user is logged in
+    username = session.get('username')
+    if not username:
+        return redirect("/login")
+
+    # Handle form submission for adding a comment
+    if request.method == "POST":
         comment_text = request.form.get("comment_text")
-        username = session.get('username')
 
+        # Insert the comment into the database
         g.conn.execute(text(
-            "INSERT INTO Posted_Comment_Reviews (CommentText, Username, SongID) "
-            "VALUES (:comment_text, :username, :song_id)"
+            """
+            INSERT INTO Posted_Comment_Reviews (CommentText, Username, SongID)
+            VALUES (:comment_text, :username, :song_id)
+            """
         ), {"comment_text": comment_text, "username": username, "song_id": song_id})
-        g.conn.commit()
 
-        #show songs' details
-
-        song = g.conn.execute(text(
-        "SELECT Title, Likes, DurationInSeconds FROM Songs WHERE SongID = :song_id"
+    # Fetch song details
+    song = g.conn.execute(text(
+        """
+        SELECT Title, Likes, DurationInSeconds
+        FROM Songs
+        WHERE SongID = :song_id
+        """
     ), {"song_id": song_id}).fetchone()
 
-        # comments
-
-        comments = g.conn.execute(text(
-        "SELECT CommentText, Username, Likes FROM Posted_Comment_Reviews WHERE SongID = :song_id"
+    # Fetch comments for the song
+    comments = g.conn.execute(text(
+        """
+        SELECT CommentText, Username, Likes
+        FROM Posted_Comment_Reviews
+        WHERE SongID = :song_id
+        ORDER BY Likes DESC
+        """
     ), {"song_id": song_id}).fetchall()
 
-    return render_template("song_details.html", song=song, comments=comments)
-
-
-
-
-
+    # Render the song details template with song and comment data
+    return render_template(
+        "song_details.html",
+        song=song,
+        comments=comments,
+        user=username
+    )
 
 
 if __name__ == "__main__":
