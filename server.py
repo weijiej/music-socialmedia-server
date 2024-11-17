@@ -3,7 +3,7 @@ import spotipy
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, session
+from flask import Flask, request, render_template, g, redirect, Response, abort, session, flash, url_for
 from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -64,10 +64,8 @@ def login():
         return render_template("login.html")
         
     username = request.form.get("username")
-    
-    if not username or username.strip() == "":
-        return render_template("login.html", error="Username is required"), 400
         
+    #check wether username is already in database
     result = g.conn.execute(
         text("SELECT username FROM Users WHERE username = :username"),
         {"username": username}
@@ -84,15 +82,9 @@ def login():
 def signup():
     if request.method == "GET":
         return render_template("signup.html")
-        
+    
     username = request.form.get("username")
     DoB = request.form.get("DoB")
-    
-    if not username or username.strip() == "":
-        return render_template("signup.html", error="Username is required"), 400
-        
-    if not DoB:
-        return render_template("signup.html", error="Date of Birth is required"), 400
         
     existing_user = g.conn.execute(
         text("SELECT username FROM users WHERE username = :username"),
@@ -102,6 +94,7 @@ def signup():
     if existing_user:
         return render_template("signup.html", error="Username already exists. Please choose another."), 400
     
+    #username is not in database
     g.conn.execute(
         text("INSERT INTO users (username, DateOfBirth) VALUES (:username, :DoB)"),
         {"username": username, "DoB": DoB}
@@ -130,11 +123,12 @@ def dashboard():
             FROM favorites f
             WHERE f.username = :username
         )
-        LIMIT 10
+        LIMIT 20
         """), {
             'username':current_user
         }).fetchall()
     
+    #list to store song information
     posts = []
     for song in songs:
         posts.append({
@@ -144,6 +138,141 @@ def dashboard():
         })
 
     return render_template("dashboard.html", user=session['username'], posts=posts)
+
+@app.route('/add_favorite', methods = ["POST"])
+def add_favorite():
+    #check if user is logged in
+    if 'username' not in session:
+        return redirect('/login')
+    
+    song_id = request.form.get('song_id')
+    username = session['username']
+
+    #database queries:
+    #1. Get song title for success message
+    song = g.conn.execute(text("SELECT s.title FROM songs s WHERE s.songid = :songid"), {"songid":song_id}).fetchone()
+
+    song_title = song[0]
+
+    #2. Check favorites table
+    current_favorites = g.conn.execute(text("""
+        SELECT *
+        FROM favorites f
+        WHERE username = :username AND songid = :songid
+        """
+    ),{
+        'username':username,
+        'songid':song_id
+    }).fetchone()
+
+    if not current_favorites:
+        #add to favorites
+        g.conn.execute(text("""
+            INSERT INTO favorites(username, songid)
+            VALUES (:username, :songid)
+        """), {
+            "username":username,
+            "songid":song_id
+        })
+        g.conn.commit()
+        flash(f"'{song_title}' was added to your favorites!", "success")
+    else:
+        flash(f"'{song_title}' is already in your favorites!", "info")
+
+    return redirect("/dashboard")
+
+@app.route('/song/<string:song_id>/comments')
+def view_comments(song_id):
+    #check if user is still logged in
+    if 'username' not in session:
+        return redirect('/login')
+
+    #get the song details
+    song_details = g.conn.execute(text("""
+        SELECT s.songid, s.title, a.artistname
+        FROM songs s JOIN released_under ru ON s.songid = ru.songid
+        JOIN artists a ON ru.artistid = a.artistid
+        WHERE s.songid = :songid
+    """), {
+        "songid": song_id
+    }).fetchone()
+
+    #check if its a valid song
+    if not song_details:
+        return redirect('/dashboard')
+
+    song = {
+        'id': song_details[0],
+        'title': song_details[1],
+        'artist_name': song_details[2]
+    }
+
+    #query for all comments associated with the song
+    comments_details = g.conn.execute(text("""
+        SELECT *
+        FROM posted_comment_reviews pcr JOIN songs s ON pcr.songid = s.songid
+        WHERE s.songid = :songid
+        ORDER BY pcr.likes DESC
+    """),{
+        "songid": song_id
+    }).fetchall()
+
+    all_comments = []
+    for comment in comments_details:
+        all_comments.append({
+            'commentid': comment[0],
+            "comment_text": comment[1],
+            "likes": comment[2],
+            "date_created": comment[3],
+            "username": comment[4]
+        })
+    
+    return render_template("comments.html", song=song, comments=all_comments)
+
+@app.route('/song/<string:song_id>/comment', methods=['POST'])
+def add_comment(song_id):
+    if 'username' not in session:
+        return redirect('/login')
+
+    #get the user input
+    comment_text = request.form.get('comment_text')
+    try:
+        #check the last comment number, used for creating new commentid
+        last_comment = g.conn.execute(text("""
+            SELECT pcr.commentid
+            FROM posted_comment_reviews pcr
+            ORDER BY commentid DESC
+            LIMIT 1
+        """)).fetchone()
+
+        if last_comment:
+            #get the last commentid #
+            last_num = int(last_comment[0][3:])
+            new_num = last_num + 1
+        else:
+            #no comments exist
+            new_num = 1
+
+        new_comment_id = f"CMT{new_num:07d}"
+
+        #insert new comment into the database
+        g.conn.execute(text("""
+            INSERT INTO posted_comment_reviews (commentid, comment_text, likes, datecreated, username, songid)
+            VALUES (:commentid, :comment_text, 0, CURRENT_TIMESTAMP, :username, :songid)
+        """),{
+            'commentid': new_comment_id,
+            'comment_text': comment_text,
+            'username': session['username'],
+            'songid': song_id
+        })
+        g.conn.commit()
+
+        flash("Comment added successfully", "success")
+    except Exception as e:
+        print(f"Error adding comment: {e}")
+        flash("Error adding comment. Please try again.", "info")
+
+    return redirect(url_for('view_comments', song_id=song_id))
 
 if __name__ == "__main__":
   import click
