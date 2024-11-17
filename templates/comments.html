@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <div style="margin-bottom: 20px;">
+            <h1>{{ song.title }}</h1>
+            <p>Artist: {{ song.artist_name }}</p>
+            <a href="{{ url_for('dashboard') }}" style="text-decoration: none; color: #0366d6;">← Back to Dashboard</a>
+        </div>
+    
+        <div class="flash-messages" style="margin: 20px 0;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}" style="padding: 10px; 
+                            margin-bottom: 10px; 
+                            border-radius: 4px;
+                            {% if category == 'success' %}
+                                background-color: #d4edda; 
+                                border: 1px solid #c3e6cb; 
+                                color: #155724;
+                            {% elif category == 'info' %}
+                                background-color: #d1ecf1; 
+                                border: 1px solid #bee5eb; 
+                                color: #0c5460;
+                            {% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    
+        <div class="comments">
+            {% if comments %}
+                {% for comment in comments %}
+                <div style="border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <strong>{{ comment.username }}</strong>
+                        <span style="color: #666;">{{ comment.date_created.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <p style="margin: 10px 0;">{{ comment.comment_text }}</p>
+                    <div style="color: #666;">
+                        {{ comment.likes }} likes
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No comments yet.</p>
+            {% endif %}
+        </div>
+    
+        <!-- Add Comment Form -->
+        <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <h3>Add a Comment</h3>
+            <form action="{{ url_for('add_comment', song_id=song.id) }}" method="POST">
+                <textarea name="comment_text" 
+                          rows="3" 
+                          style="width: 100%; margin-bottom: 10px; padding: 8px; border-radius: 4px; border: 1px solid #ddd;"
+                          placeholder="Write your comment here..."
+                          required></textarea>
+                <button type="submit" 
+                        style="background: #0366d6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    Post Comment
+                </button>
+            </form>
+        </div>
+    </div>
+</html>
