@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+</head>
+<body>
+    <h1>Search</h1>
+    <form method="POST" action="/search">
+        <input type="text" name="search_query" placeholder="Search for songs, artists, albums, or users" required>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if search_query %}
+    <h2>Results for "{{ search_query }}"</h2>
+
+    {% if results %}
+    <h3>Songs</h3>
+    <ul>
+        {% for song in results.songs %}
+        <li>{{ song.Title }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Artists</h3>
+    <ul>
+        {% for artist in results.artists %}
+        <li>{{ artist.ArtistName }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Albums</h3>
+    <ul>
+        {% for album in results.albums %}
+        <li>{{ album.AlbumTitle }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Users</h3>
+    <ul>
+        {% for user in results.users %}
+        <li>{{ user.Username }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No results found.</p>
+    {% endif %}
+    {% endif %}
+</body>
+</html>
