@@ -85,57 +85,83 @@ def signup():
 
 @app.route('/dashboard', methods=["GET"])
 def dashboard():
-  return "Welcome to your dashboard"
+  if 'username' not in session:
+        return redirect('/login')
+    
+    current_user = session['username']
 
+    # Query for distinct songs not currently favorited by the user
+    # Returns the song title and its respective artist
+    songs = g.conn.execute(text("""
+        SELECT DISTINCT s.songid, s.title, a.artistname
+        FROM songs s
+        JOIN released_under ru ON s.songid = ru.songid
+        JOIN artists a ON a.artistid = ru.artistid
+        WHERE s.songid NOT IN (
+            SELECT f.songid
+            FROM favorites f
+            WHERE f.username = :username
+        )
+        ORDER BY s.title
+        LIMIT 10
+    """), {"username": current_user}).fetchall()
 
-  username = session.get('username')
+    # Fetch user's playlists
+    user_playlists = g.conn.execute(text("""
+        SELECT PlaylistID, PlaylistName, TotalSongs
+        FROM User_Playlists
+        WHERE Username = :username
+    """), {"username": current_user}).fetchall()
 
-  #Fetch most liked songs for the feed
-  songs = g.conn.execute(text(
-        "SELECT Title, Likes, SongID FROM Songs ORDER BY Likes DESC LIMIT 10"
-    )).fetchall()
+    # Fetch popular artists to follow
+    popular_artists = g.conn.execute(text("""
+        SELECT ArtistName, ArtistID
+        FROM Artists A
+        LEFT JOIN Follows F ON A.ArtistID = F.ArtistID
+        GROUP BY A.ArtistID, A.ArtistName
+        ORDER BY COUNT(F.Username) DESC
+        LIMIT 5
+    """)).fetchall()
 
-  # Fetch user's playlists
-  user_playlists = g.conn.execute(text(
-        "SELECT PlaylistID, PlaylistName, TotalSongs FROM User_Playlists WHERE Username = :username"
-    ), {"username": username}).fetchall()
-
-  # Fetch popular artists to follow
-    popular_artists = g.conn.execute(text(
-        "SELECT ArtistName, ArtistID FROM Artists A "
-        "LEFT JOIN Follows F ON A.ArtistID = F.ArtistID "
-        "GROUP BY A.ArtistID, A.ArtistName "
-        "ORDER BY COUNT(F.Username) DESC LIMIT 5"
-    )).fetchall()
-
-    # Use the most liked songs as recommendations
-    recommendations = songs
+    # Prepare posts (non-favorited songs) for rendering
+    posts = []
+    for song in songs:
+        posts.append({
+            'song_id': song[0],
+            'song_title': song[1],
+            'artist_name': song[2]
+        })
 
     return render_template(
         "dashboard.html",
-        songs=songs,
+        user=current_user,
+        posts=posts,  # Non-favorited songs
         user_playlists=user_playlists,
-        popular_artists=popular_artists,
-        recommendations=recommendations
+        popular_artists=popular_artists
     )
 
   #  This route handles the creation of playlists. Users can specify a playlist name and description.
 @app.route('/create_playlist', methods=["GET", "POST"])
 def create_playlist():
-    username = session.get('username')#ensure the user is logged in
+    username = session.get('username')  # Ensure the user is logged in
+    if not username:
+        return redirect("/login")
+
     if request.method == "POST":
         playlist_name = request.form.get("playlist_name")
         description = request.form.get("description")
 
-        #insert new playlist
+        # Insert new playlist
         g.conn.execute(text(
-            "INSERT INTO User_Playlists (PlaylistName, Description, Username, TotalSongs) "
-            "VALUES (:playlist_name, :description, :username, 0)"
+            """
+            INSERT INTO User_Playlists (PlaylistName, Description, Username, TotalSongs)
+            VALUES (:playlist_name, :description, :username, 0)
+            """
         ), {"playlist_name": playlist_name, "description": description, "username": username})
-        g.conn.commit()
 
         return redirect("/dashboard")
-     return render_template("create_playlist.html")
+
+    return render_template("create_playlist.html")
 
 # this route diplays specific details of songs and allow user to leave comments
 
