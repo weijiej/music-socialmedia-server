@@ -8,14 +8,15 @@
 <body>
     <h1>Create a New Playlist</h1>
     <form action="/create_playlist" method="POST">
-        <label for="playlist_name">Playlist Name:</label>
-        <input type="text" id="playlist_name" name="playlist_name" required>
-        <br>
-        <label for="description">Description:</label>
-        <textarea id="description" name="description"></textarea>
-        <br>
+        <label for="playlist_name">Playlist Name:</label><br>
+        <input type="text" id="playlist_name" name="playlist_name" required><br><br>
+
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description" rows="4" cols="50" placeholder="Enter playlist description"></textarea><br><br>
+
         <button type="submit">Create Playlist</button>
     </form>
+    <br>
     <a href="/dashboard">Back to Dashboard</a>
 </body>
 </html>
