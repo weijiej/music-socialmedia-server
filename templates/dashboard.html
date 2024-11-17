@@ -31,6 +31,20 @@
         {% endwith %}
     </div>
 
+    <!-- Search Button -->
+        <div style="margin-bottom: 20px;">
+            <form action="/search" method="GET">
+                <button type="submit" style="padding: 10px 20px; 
+                    background-color: #6200ea; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 4px; 
+                    cursor: pointer;">
+                    Search
+                </button>
+            </form>
+        </div>
+
     <!-- Lists out the songs as a "post" -->
     <div class="posts">
         {% for post in posts %}
