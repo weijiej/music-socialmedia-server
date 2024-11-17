@@ -211,6 +211,36 @@ def song_details(song_id):
         user=username
     )
 
+@app.route('/search', methods=["GET", "POST"])
+def search():
+    results = None
+    search_query = None
+
+    if request.method == "POST":
+        search_query = request.form.get("search_query")
+
+        # Perform a search across songs, artists, albums, and users
+        results = {
+            "songs": g.conn.execute(text(
+                "SELECT Title, SongID FROM Songs WHERE Title ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+
+            "artists": g.conn.execute(text(
+                "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+
+            "albums": g.conn.execute(text(
+                "SELECT AlbumTitle, AlbumID FROM Albums WHERE AlbumTitle ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+
+            "users": g.conn.execute(text(
+                "SELECT Username FROM Users WHERE Username ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+        }
+
+    return render_template("search.html", results=results, search_query=search_query)
+
+
 
 if __name__ == "__main__":
   import click
