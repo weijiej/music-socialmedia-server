@@ -295,35 +295,60 @@ def artist_profile(artist_id):
     return render_template("artist_profile.html", artist=artist, songs=songs)
 
 #search function
-@app.route('/search', methods=["GET", "POST"])
+@app.route('/search', methods=['GET', 'POST'])
 def search():
-    results = {"artists": [], "users": []}  
-    search_query = None
+    if request.method == 'GET':
+        # Render the search page
+        return render_template('search.html')
 
-    if request.method == "POST":
-        search_query = request.form.get("search_query")
+    # For POST: process the search input
+    query = request.form.get('search_query').strip()
+    if not query:
+        flash("Please enter a valid search term.", "info")
+        return redirect('/search')
 
-        # Search for matching artist names
-        artists = g.conn.execute(text(
-          "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
-        ), {"query": f"%{search_query}%"}).fetchall()
+    # Query for artists
+    artists = g.conn.execute(text("""
+        SELECT a.artistname, a.artistbio, a.country, s.title
+        FROM artists a
+        LEFT JOIN released_under ru ON a.artistid = ru.artistid
+        LEFT JOIN songs s ON ru.songid = s.songid
+        WHERE LOWER(a.artistname) LIKE :query
+    """), {"query": f"%{query.lower()}%"}).fetchall()
 
-        # Search for matching usernames
-        users = g.conn.execute(text(
-            "SELECT Username FROM Users WHERE Username ILIKE :query"
-        ), {"query": f"%{search_query}%"}).fetchall()
+    # Query for users
+    users = g.conn.execute(text("""
+        SELECT username, dateofbirth, datecreated
+        FROM users
+        WHERE LOWER(username) LIKE :query
+    """), {"query": f"%{query.lower()}%"}).fetchall()
 
-        # Convert results into dictionaries
-        results = { 
-          "artists": [{"ArtistName": artist[0], "ArtistID": artist[1]} for artist in artists], 
-          "users": [{"Username": user[0]} for user in users], }
+    # Prepare the data
+    artist_results = {}
+    for artist in artists:
+        if artist[0] not in artist_results:
+            artist_results[artist[0]] = {
+                "artist_bio": artist[1],
+                "country": artist[2],
+                "songs": []
+            }
+        if artist[3]:
+            artist_results[artist[0]]["songs"].append(artist[3])
 
-        # Debugging output for clarity
-        print("Search Query:", search_query)
-        print("Artists found:", results["artists"])
-        print("Users found:", results["users"])
+    user_results = [{
+        "username": user[0],
+        "dob": user[1],
+        "date_created": user[2]
+    } for user in users]
 
-    return render_template("search.html", results=results, search_query=search_query)
+    # Render the results page
+    return render_template(
+        'search_results.html',
+        query=query,
+        artists=artist_results,
+        users=user_results
+    )
+
 
 #user profile
 @app.route('/profile')
