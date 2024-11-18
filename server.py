@@ -1,4 +1,4 @@
-import os
+rimport os
 import spotipy
   # accessible as a variable in index.html:
 from sqlalchemy import *
@@ -375,7 +375,7 @@ def user_profile():
                 'artistname': song[2]
             })
             
-        return render_template('profile.html', username=username, playlists=playlists_list, artists=artists_list, favorites=favorites_list)
+        return render_template('user_profile.html', username=username, playlists=playlists_list, artists=artists_list, favorites=favorites_list)
 
     except Exception as e:
         print(f"Error loading profile data: {e}")
