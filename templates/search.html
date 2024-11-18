@@ -24,7 +24,7 @@
         {% for artist in results.artists %}
         <li>
             <!-- Button for Artist Profile -->
-            <form method="GET" action="{{ url_for('artist_profile', artist_name=artist.ArtistName) }}" style="display: inline;">
+            <form method="GET" action="{{ url_for('artist_profile', artist_id=artist.ArtistID) }}" style="display: inline;">
                 <button type="submit">{{ artist.ArtistName }}'s Profile</button>
             </form>
         </li>
