@@ -274,33 +274,6 @@ def add_comment(song_id):
 
     return redirect(url_for('view_comments', song_id=song_id))
 
-@app.route('/search', methods=["GET", "POST"])
-def search():
-  if request.method == "POST":
-        search_query = request.form.get("search_query")
-
-        # Search for artists matching the query
-        artists = g.conn.execute(text(
-            "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
-        ), {"query": f"%{search_query}%"}).fetchall()
-
-        # Search for users matching the query
-        users = g.conn.execute(text(
-            "SELECT Username FROM Users WHERE Username ILIKE :query"
-        ), {"query": f"%{search_query}%"}).fetchall()
-
-        # Combine results
-        results = {
-            "artists": artists,
-            "users": users
-        }
-
-        return render_template("search.html", results=results, search_query=search_query)
-
-    # If GET request, render empty search page
-    return render_template("search.html")
-    return render_template("search.html", results=results, search_query=search_query)
-
 @app.route('/artist/<artist_id>', methods=["GET"])
 def artist_profile(artist_id):
     # Fetch artist details
@@ -320,6 +293,103 @@ def artist_profile(artist_id):
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
 
+@app.route('/search', methods=["GET", "POST"])
+def search():
+    results = None
+    search_query = None
+
+    if request.method == "POST":
+        search_query = request.form.get("search_query")
+
+        # Perform a search across songs, artists, albums, and users
+        results = {
+            "songs": g.conn.execute(text(
+                "SELECT Title, SongID FROM Songs WHERE Title ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+
+            "artists": g.conn.execute(text(
+                "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+
+            "albums": g.conn.execute(text(
+                "SELECT AlbumTitle, AlbumID FROM Albums WHERE AlbumTitle ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+
+            "users": g.conn.execute(text(
+                "SELECT Username FROM Users WHERE Username ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+        }
+
+    return render_template("search.html", results=results, search_query=search_query)
+
+@app.route('/profile')
+def user_profile():
+    if 'username' not in session:
+        return redirect('/login')
+
+    username = session['username']
+
+    try:
+        #get the users playlists
+        playlists = g.conn.execute(text("""
+            SELECT up.playlistid, up.playlistname, up.since
+            FROM user_playlists up
+            WHERE up.username = :username
+        """), {
+            'username': username
+        }).fetchall()
+        
+        #get the followed artists
+        followed_artists = g.conn.execute(text("""
+            SELECT f.artistid, a.artistname, f.since
+            FROM follows f JOIN artists a ON f.artistid = a.artistid
+            WHERE f.username = :username
+        """), {
+            'username': username
+        }).fetchall()
+
+        #get the user's favorite songs
+        favorited_songs = g.conn.execute(text("""
+            SELECT f.songid, s.title, a.artistname
+            FROM favorites f JOIN songs s ON f.songid = s.songid
+            JOIN released_under ru ON s.songid = ru.songid
+            JOIN artists a ON ru.artistid = a.artistid
+            WHERE f.username = :username 
+        """), {
+            'username': username
+        }).fetchall()
+
+        #turn queries into lists
+        playlists_list = []
+        for playlist in playlists:
+            playlists_list.append({
+                'playlistid': playlist[0],
+                'playlistname': playlist[1],
+                'since': playlist[2]
+            })
+
+        artists_list = []
+        for artist in followed_artists:
+            artists_list.append({
+                'artistid': artist[0],
+                'artistname': artist[1],
+                'since': artist[2]
+            })
+
+        favorites_list = []
+        for song in favorited_songs:
+            favorites_list.append({
+                'songid': song[0],
+                'title': song[1],
+                'artistname': song[2]
+            })
+            
+        return render_template('profile.html', username=username, playlists=playlists_list, artists=artists_list, favorites=favorites_list)
+
+    except Exception as e:
+        print(f"Error loading profile data: {e}")
+        flash("Error loading profile information", "info")
+        return redirect('/dashboard')
 
 if __name__ == "__main__":
   import click
