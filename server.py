@@ -276,7 +276,7 @@ def add_comment(song_id):
 
 @app.route('/artist/<artist_name>', methods=["GET"])
 def artist_profile(artist_name):
-    # Fetch artist details by name
+    # Fetch artist details using artist_name
     artist = g.conn.execute(text(
         "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistName = :artist_name"
     ), {"artist_name": artist_name}).fetchone()
@@ -288,8 +288,7 @@ def artist_profile(artist_name):
     songs = g.conn.execute(text(
         "SELECT S.Title, S.SongID FROM Songs S "
         "JOIN ReleasedUnder R ON S.SongID = R.SongID "
-        "JOIN Artists A ON R.ArtistID = A.ArtistID "
-        "WHERE A.ArtistName = :artist_name"
+        "WHERE R.ArtistID = (SELECT ArtistID FROM Artists WHERE ArtistName = :artist_name)"
     ), {"artist_name": artist_name}).fetchall()
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
