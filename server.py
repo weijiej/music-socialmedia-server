@@ -278,7 +278,7 @@ def add_comment(song_id):
 def artist_profile(artist_name):
     # Fetch artist details
     artist = g.conn.execute(text(
-        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistName ILIKE :artist_name"
+        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistName = :artist_name"
     ), {"artist_name": artist_name}).fetchone()
 
     if not artist:
@@ -288,7 +288,7 @@ def artist_profile(artist_name):
     songs = g.conn.execute(text(
         "SELECT S.Title, S.SongID FROM Songs S "
         "JOIN ReleasedUnder R ON S.SongID = R.SongID "
-        "WHERE R.ArtistID = (SELECT ArtistID FROM Artists WHERE ArtistName ILIKE :artist_name)"
+        "WHERE R.ArtistID = (SELECT ArtistID FROM Artists WHERE ArtistName = :artist_name)"
     ), {"artist_name": artist_name}).fetchall()
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
