@@ -3,47 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search</title>
+    <title>Search Results</title>
 </head>
 <body>
-    <h1>Search</h1>
+    <h1>Search Results</h1>
     <form method="POST" action="/search">
-        <input type="text" name="search_query" placeholder="Search for artists or users" required>
+        <input type="text" name="search_query" placeholder="Search for artists or users" value="{{ search_query }}" required>
         <button type="submit">Search</button>
     </form>
 
     {% if search_query %}
-    <h2>Results for "{{ search_query }}"</h2>
+        <h2>Results for "{{ search_query }}"</h2>
 
-    {% if results.artists or results.users %}
-    {% if results.artists %}
-    <h3>Artists</h3>
-    <ul>
-        {% for artist in results.artists %}
-        <li>
-            <a href="{{ url_for('artist_profile', artist_id=artist.ArtistID) }}">
-                {{ artist.ArtistName }}
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+        <!-- Artists Section -->
+        {% if results.artists %}
+        <h3>Artists</h3>
+        <ul>
+            {% for artist in results.artists %}
+            <li>
+                <a href="{{ url_for('artist_profile', artist_id=artist.ArtistID) }}">
+                    {{ artist.ArtistName }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No artists found.</p>
+        {% endif %}
 
-    {% if results.users %}
-    <h3>Users</h3>
-    <ul>
-        {% for user in results.users %}
-        <li>
-            <a href="{{ url_for('user_profile', username=user.Username) }}">
-                {{ user.Username }}
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+        <!-- Users Section -->
+        {% if results.users %}
+        <h3>Users</h3>
+        <ul>
+            {% for user in results.users %}
+            <li>
+                <a href="{{ url_for('user_profile', username=user.Username) }}">
+                    {{ user.Username }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No users found.</p>
+        {% endif %}
     {% else %}
-    <p>No results found for "{{ search_query }}".</p>
-    {% endif %}
+        <p>Enter a search query to find artists or users.</p>
     {% endif %}
 </body>
 </html>
