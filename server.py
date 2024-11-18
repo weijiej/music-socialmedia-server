@@ -275,12 +275,12 @@ def add_comment(song_id):
     return redirect(url_for('view_comments', song_id=song_id))
   
 #artist's profile page
-@app.route('/artist/<artist_name>', methods=["GET"])
-def artist_profile(artist_name):
-    # Fetch artist details by name
+@app.route('/artist/<artist_id>', methods=["GET"])
+def artist_profile(artist_id):
+    # Fetch artist details
     artist = g.conn.execute(text(
-        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistName = :artist_name"
-    ), {"artist_name": artist_name}).fetchone()
+        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id"
+    ), {"artist_id": artist_id}).fetchone()
 
     if not artist:
         return "Artist not found", 404
@@ -289,12 +289,10 @@ def artist_profile(artist_name):
     songs = g.conn.execute(text(
         "SELECT S.Title, S.SongID FROM Songs S "
         "JOIN ReleasedUnder R ON S.SongID = R.SongID "
-        "JOIN Artists A ON R.ArtistID = A.ArtistID "
-        "WHERE A.ArtistName = :artist_name"
-    ), {"artist_name": artist_name}).fetchall()
+        "WHERE R.ArtistID = :artist_id"
+    ), {"artist_id": artist_id}).fetchall()
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
-
 
 #search function
 @app.route('/search', methods=["GET", "POST"])
