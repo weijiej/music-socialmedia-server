@@ -275,93 +275,48 @@ def add_comment(song_id):
     return redirect(url_for('view_comments', song_id=song_id))
   
 #artist's profile page
-@app.route('/artist/<artist_name>')
+@app.route('/artist/<artist_name>', methods=["GET"])
 def artist_profile(artist_name):
-    # Query for artist details
-    artist_details = g.conn.execute(text("""
-        SELECT artistname, artistbio, country
-        FROM artists
-        WHERE LOWER(artistname) = :artist_name
-    """), {"artist_name": artist_name.lower()}).fetchone()
+    # Fetch artist details by name
+    artist = g.conn.execute(text(
+        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistName = :artist_name"
+    ), {"artist_name": artist_name}).fetchone()
 
-    if not artist_details:
-        flash("Artist not found.", "info")
-        return redirect('/search')
+    if not artist:
+        return "Artist not found", 404
 
-    # Query for the songs by the artist
-    songs = g.conn.execute(text("""
-        SELECT s.title
-        FROM songs s
-        JOIN released_under ru ON s.songid = ru.songid
-        JOIN artists a ON a.artistid = ru.artistid
-        WHERE LOWER(a.artistname) = :artist_name
-    """), {"artist_name": artist_name.lower()}).fetchall()
+    # Fetch songs by the artist
+    songs = g.conn.execute(text(
+        "SELECT S.Title, S.SongID FROM Songs S "
+        "JOIN ReleasedUnder R ON S.SongID = R.SongID "
+        "JOIN Artists A ON R.ArtistID = A.ArtistID "
+        "WHERE A.ArtistName = :artist_name"
+    ), {"artist_name": artist_name}).fetchall()
 
-    # Prepare data for rendering
-    artist = {
-        "name": artist_details[0],
-        "bio": artist_details[1],
-        "country": artist_details[2],
-        "songs": [song[0] for song in songs]
-    }
+    return render_template("artist_profile.html", artist=artist, songs=songs)
 
-    return render_template("artist_profile.html", artist=artist)
 
 #search function
-@app.route('/search', methods=['GET', 'POST'])
+@app.route('/search', methods=["GET", "POST"])
 def search():
-    if request.method == 'GET':
-        # Render the search page
-        return render_template('search.html')
+    results = None
+    search_query = None
 
-    # For POST: process the search input
-    query = request.form.get('search_query').strip()
-    if not query:
-        flash("Please enter a valid search term.", "info")
-        return redirect('/search')
+    if request.method == "POST":
+        search_query = request.form.get("search_query")
 
-    # Query for artists
-    artists = g.conn.execute(text("""
-        SELECT a.artistname, a.artistbio, a.country, s.title
-        FROM artists a
-        LEFT JOIN released_under ru ON a.artistid = ru.artistid
-        LEFT JOIN songs s ON ru.songid = s.songid
-        WHERE LOWER(a.artistname) LIKE :query
-    """), {"query": f"%{query.lower()}%"}).fetchall()
+        # Perform a search across artists and users
+        results = {
+            "artists": g.conn.execute(text(
+                "SELECT ArtistName FROM Artists WHERE ArtistName ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
 
-    # Query for users
-    users = g.conn.execute(text("""
-        SELECT username, dateofbirth, datecreated
-        FROM users
-        WHERE LOWER(username) LIKE :query
-    """), {"query": f"%{query.lower()}%"}).fetchall()
+            "users": g.conn.execute(text(
+                "SELECT Username FROM Users WHERE Username ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+        }
 
-    # Prepare the data
-    artist_results = {}
-    for artist in artists:
-        if artist[0] not in artist_results:
-            artist_results[artist[0]] = {
-                "artist_bio": artist[1],
-                "country": artist[2],
-                "songs": []
-            }
-        if artist[3]:
-            artist_results[artist[0]]["songs"].append(artist[3])
-
-    user_results = [{
-        "username": user[0],
-        "dob": user[1],
-        "date_created": user[2]
-    } for user in users]
-
-    # Render the results page
-    return render_template(
-        'search_results.html',
-        query=query,
-        artists=artist_results,
-        users=user_results
-    )
-
+    return render_template("search.html", results=results, search_query=search_query)
 
 #user profile
 @app.route('/profile')
