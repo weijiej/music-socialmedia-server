@@ -4,73 +4,91 @@
         <title>Dashboard</title>
         <link rel="stylesheet" type="text/css" href="../static/styles.css">
     </head>
-    
-    <h1>{{user}}'s Dashboard</h1>
+    <body>
+        <h1>{{user}}'s Dashboard</h1>
 
-    <!-- Success Message for favoriting a song -->
-    <div class="flash-messages" style="margin: 20px 0;">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert {{ category }}" style="padding: 10px; 
-                        margin-bottom: 10px; 
-                        border-radius: 4px;
-                        {% if category == 'success' %}
-                            background-color: #d4edda; 
-                            border: 1px solid #c3e6cb; 
-                            color: #155724;
-                        {% elif category == 'info' %}
-                            background-color: #d1ecf1; 
-                            border: 1px solid #bee5eb; 
-                            color: #0c5460;
-                        {% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
-
-    <!-- Search Button -->
-        <div style="margin-bottom: 20px;">
-            <form action="/search" method="GET">
-                <button type="submit" style="padding: 10px 20px; 
-                    background-color: #6200ea; 
-                    color: white; 
-                    border: none; 
-                    border-radius: 4px; 
-                    cursor: pointer;">
-                    Search
-                </button>
-            </form>
+        <!-- Profile Button -->
+        <div style="position: absolute; top: 40px; right: 40px;">
+            <a href="{{ url_for('user_profile') }}" 
+            class="profile-button"
+            style="text-decoration: none; 
+                    padding: 8px 16px; 
+                    border: 1px solid #ccc; 
+                    background: #f8f9fa; 
+                    color: #212529; 
+                    border-radius: 4px;
+                    font-weight: 500;">
+                Your Profile
+            </a>
         </div>
 
-    <!-- Lists out the songs as a "post" -->
-    <div class="posts">
-        {% for post in posts %}
-            <div class="post" style="border: 1px solid black; margin: 10px; padding: 15px; width: 300px;">
-                <h3>{{ post.song_title }}</h3>
-                <p>Artist: {{ post.artist_name }}</p>
-                
-                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                    <a href="{{ url_for('view_comments', song_id=post.song_id) }}" 
-                    class="button" 
-                    style="text-decoration: none; 
-                            padding: 2px 6px; 
-                            border: 1px solid #ccc; 
-                            background: #f8f9fa; 
-                            color: #212529; 
-                            border-radius: 4px;">
-                        Comments
-                    </a>
-                    
-                    <form action="/add_favorite" method="POST" style="display: inline;">
-                        <input type="hidden" name="song_id" value="{{ post.song_id }}">
-                        <button type="submit">Favorite</button>
-                    </form>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
+        <!-- Success Message for favoriting a song -->
+        <div class="flash-messages" style="margin: 20px 0;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}" style="padding: 10px; 
+                            margin-bottom: 10px; 
+                            border-radius: 4px;
+                            {% if category == 'success' %}
+                                background-color: #d4edda; 
+                                border: 1px solid #c3e6cb; 
+                                color: #155724;
+                            {% elif category == 'info' %}
+                                background-color: #d1ecf1; 
+                                border: 1px solid #bee5eb; 
+                                color: #0c5460;
+                            {% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
 
+        <!-- Search Button -->
+            <div style="margin-bottom: 20px;">
+                <form action="/search" method="GET">
+                    <button type="submit" style="padding: 10px 20px; 
+                        background-color: lightblue; 
+                        color: black; 
+                        border: black; 
+                        border-radius: 4px; 
+                        cursor: pointer;">
+                        Search
+                    </button>
+                </form>
+            </div>
+
+        <!-- Lists out the songs as a "post" -->
+        <div class="posts">
+            {% for post in posts %}
+                <div class="post" style="border: 1px solid black; margin: 10px; padding: 15px; width: 300px;">
+                    <h3>{{ post.song_title }}</h3>
+                    <p>Artist: {{ post.artist_name }}</p>
+                    
+                    
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <!-- Comment Button -->
+                        <a href="{{ url_for('view_comments', song_id=post.song_id) }}" 
+                        class="button" 
+                        style="text-decoration: none; 
+                                padding: 2px 6px; 
+                                border: 1px solid #ccc; 
+                                background: #f8f9fa; 
+                                color: #212529; 
+                                border-radius: 4px;">
+                            Comments
+                        </a>
+                        
+                        <!-- Favorites Button -->
+                        <form action="/add_favorite" method="POST" style="display: inline;">
+                            <input type="hidden" name="song_id" value="{{ post.song_id }}">
+                            <button type="submit">Favorite</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    <body>
 </html>
