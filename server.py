@@ -326,8 +326,6 @@ def search():
 
     return render_template("search.html", results=results, search_query=search_query)
 
-    return render_template("search.html", results=results, search_query=search_query)
-
 @app.route('/profile')
 def user_profile():
     if 'username' not in session:
