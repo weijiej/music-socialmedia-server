@@ -274,12 +274,12 @@ def add_comment(song_id):
 
     return redirect(url_for('view_comments', song_id=song_id))
 
-@app.route('/artist/<artist_id>', methods=["GET"])
-def artist_profile(artist_id):
+@app.route('/artist/<artist_name>', methods=["GET"])
+def artist_profile(artist_name):
     # Fetch artist details
     artist = g.conn.execute(text(
-        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id"
-    ), {"artist_id": artist_id}).fetchone()
+        "SELECT ArtistID, ArtistName, ArtistBio, Country FROM Artists WHERE ArtistName ILIKE :artist_name"
+    ), {"artist_name": artist_name}).fetchone()
 
     if not artist:
         return "Artist not found", 404
@@ -289,7 +289,7 @@ def artist_profile(artist_id):
         "SELECT S.Title, S.SongID FROM Songs S "
         "JOIN ReleasedUnder R ON S.SongID = R.SongID "
         "WHERE R.ArtistID = :artist_id"
-    ), {"artist_id": artist_id}).fetchall()
+    ), {"artist_id": artist['ArtistID']}).fetchall()
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
 
@@ -304,7 +304,7 @@ def search():
         # Perform a search across artists and users
         results = {
             "artists": g.conn.execute(text(
-                "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
+                "SELECT ArtistName FROM Artists WHERE ArtistName ILIKE :query"
             ), {"query": f"%{search_query}%"}).fetchall(),
 
             "users": g.conn.execute(text(
@@ -313,6 +313,7 @@ def search():
         }
 
     return render_template("search.html", results=results, search_query=search_query)
+
 @app.route('/profile')
 def user_profile():
     if 'username' not in session:
