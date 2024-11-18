@@ -1,0 +1,91 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+h1, h2, h3 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+p {
+    line-height: 1.6;
+    margin: 10px 0;
+}
+
+a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
+
+/* Form Styles */
+form {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+form input[type="text"] {
+    padding: 10px;
+    width: 300px;
+    margin-bottom: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+form button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #0056b3;
+}
+
+/* Search Results */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul li {
+    margin: 10px 0;
+}
+
+ul li a {
+    font-weight: bold;
+}
+
+/* Section Styles */
+section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+    form input[type="text"] {
+        width: 100%;
+    }
+
+    section {
+        padding: 10px;
+    }
+}
