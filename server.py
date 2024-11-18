@@ -1,4 +1,4 @@
-rimport os
+import os
 import spotipy
   # accessible as a variable in index.html:
 from sqlalchemy import *
