@@ -275,24 +275,37 @@ def add_comment(song_id):
     return redirect(url_for('view_comments', song_id=song_id))
   
 #artist's profile page
-@app.route('/artist/<artist_id>', methods=["GET"])
-def artist_profile(artist_id):
-    # Fetch artist details using ArtistID
-    artist = g.conn.execute(text(
-        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id"
-    ), {"artist_id": artist_id}).fetchone()
+@app.route('/artist/<artist_name>')
+def artist_profile(artist_name):
+    # Query for artist details
+    artist_details = g.conn.execute(text("""
+        SELECT artistname, artistbio, country
+        FROM artists
+        WHERE LOWER(artistname) = :artist_name
+    """), {"artist_name": artist_name.lower()}).fetchone()
 
-    if not artist:
-        return "Artist not found", 404
+    if not artist_details:
+        flash("Artist not found.", "info")
+        return redirect('/search')
 
-    # Fetch songs by the artist using ArtistID
-    songs = g.conn.execute(text(
-        "SELECT S.Title FROM Songs S "
-        "JOIN ReleasedUnder R ON S.SongID = R.SongID "
-        "WHERE R.ArtistID = :artist_id"
-    ), {"artist_id": artist_id}).fetchall()
+    # Query for the songs by the artist
+    songs = g.conn.execute(text("""
+        SELECT s.title
+        FROM songs s
+        JOIN released_under ru ON s.songid = ru.songid
+        JOIN artists a ON a.artistid = ru.artistid
+        WHERE LOWER(a.artistname) = :artist_name
+    """), {"artist_name": artist_name.lower()}).fetchall()
 
-    return render_template("artist_profile.html", artist=artist, songs=songs)
+    # Prepare data for rendering
+    artist = {
+        "name": artist_details[0],
+        "bio": artist_details[1],
+        "country": artist_details[2],
+        "songs": [song[0] for song in songs]
+    }
+
+    return render_template("artist_profile.html", artist=artist)
 
 #search function
 @app.route('/search', methods=['GET', 'POST'])
