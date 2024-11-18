@@ -275,9 +275,9 @@ def add_comment(song_id):
     return redirect(url_for('view_comments', song_id=song_id))
   
 #artist's profile page
-@app.route('/artist/<artist_id>', methods=["GET"])
+@app.route('/artist/<int:artist_id>', methods=["GET"])
 def artist_profile(artist_id):
-    # Fetch artist details
+    # Fetch artist details by ID
     artist = g.conn.execute(text(
         "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchone()
@@ -314,6 +314,49 @@ def search():
         }
 
     return render_template("search.html", results=results, search_query=search_query)
+  
+#seperate route viewing other's profile
+@app.route('/user/<username>', methods=["GET"])
+def user_profile_view(username):
+ 
+    user = g.conn.execute(text(
+        "SELECT Username FROM Users WHERE Username = :username"
+    ), {"username": username}).fetchone()
+
+    if not user:
+        return "User not found", 404
+
+    # Fetch playlists created by the user
+    playlists = g.conn.execute(text("""
+        SELECT up.playlistid, up.playlistname, up.since
+        FROM user_playlists up
+        WHERE up.username = :username
+    """), {
+        'username': username
+    }).fetchall()
+
+    # Fetch followed artists
+    followed_artists = g.conn.execute(text("""
+        SELECT f.artistid, a.artistname, f.since
+        FROM follows f JOIN artists a ON f.artistid = a.artistid
+        WHERE f.username = :username
+    """), {
+        'username': username
+    }).fetchall()
+
+    # Fetch favorite songs
+    favorited_songs = g.conn.execute(text("""
+        SELECT f.songid, s.title, a.artistname
+        FROM favorites f JOIN songs s ON f.songid = s.songid
+        JOIN released_under ru ON s.songid = ru.songid
+        JOIN artists a ON ru.artistid = a.artistid
+        WHERE f.username = :username
+    """), {
+        'username': username
+    }).fetchall()
+
+    return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
+
 
 #user profile
 @app.route('/profile')
