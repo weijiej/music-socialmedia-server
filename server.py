@@ -305,16 +305,16 @@ def search():
 
         # Perform a search across artists and users
         results = {
-          "artists": g.conn.execute(text(
-            "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
-          ), {"query": f"%{search_query}%"}).fetchall(),
-          "users": g.conn.execute(text(
-            "SELECT Username FROM Users WHERE Username ILIKE :query"
-          ), {"query": f"%{search_query}%"}).fetchall(),
+            "artists": g.conn.execute(text(
+                "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
+
+            "users": g.conn.execute(text(
+                "SELECT Username FROM Users WHERE Username ILIKE :query"
+            ), {"query": f"%{search_query}%"}).fetchall(),
         }
 
     return render_template("search.html", results=results, search_query=search_query)
-  
 #seperate route viewing other's profile
 @app.route('/user/<username>', methods=["GET"])
 def user_profile_view(username):
