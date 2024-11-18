@@ -2,14 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
 </head>
 <body>
-    <h1>Search for Artists or Users</h1>
-    <form action="/search" method="POST">
-        <input type="text" name="search_query" placeholder="Enter artist or username" required>
+    <h1>Search Results</h1>
+
+    <!-- Search Form -->
+    <form method="POST" action="/search">
+        <input type="text" name="search_query" placeholder="Search for artists or users" required>
         <button type="submit">Search</button>
     </form>
-    <a href="/dashboard">Back to Dashboard</a>
+
+    {% if search_query %}
+    <h2>Results for "{{ search_query }}"</h2>
+
+    <!-- Artist Results -->
+    <h3>Artists</h3>
+    {% if results.artists %}
+    <ul>
+        {% for artist in results.artists %}
+        <li>
+            <a href="{{ url_for('artist_profile', artist_name=artist.ArtistName) }}">
+                {{ artist.ArtistName }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No artists found.</p>
+    {% endif %}
+
+    <!-- User Results -->
+    <h3>Users</h3>
+    {% if results.users %}
+    <ul>
+        {% for user in results.users %}
+        <li>
+            <a href="{{ url_for('user_profile', username=user.Username) }}">
+                {{ user.Username }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No users found.</p>
+    {% endif %}
+    {% endif %}
 </body>
 </html>
