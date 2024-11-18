@@ -276,32 +276,27 @@ def add_comment(song_id):
 
 @app.route('/search', methods=["GET", "POST"])
 def search():
-    results = None
-    search_query = None
-
-    if request.method == "POST":
-        search_query = request.form.get("search_query")
-
-        # Perform a search across songs, artists, albums, and users
-        results = {
-            "songs": g.conn.execute(text(
-                "SELECT Title, SongID FROM Songs WHERE Title ILIKE :query"
-            ), {"query": f"%{search_query}%"}).fetchall(),
-
-            "artists": g.conn.execute(text(
-                "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
-            ), {"query": f"%{search_query}%"}).fetchall(),
-
-            "albums": g.conn.execute(text(
-                "SELECT AlbumTitle, AlbumID FROM Albums WHERE AlbumTitle ILIKE :query"
-            ), {"query": f"%{search_query}%"}).fetchall(),
-
-            "users": g.conn.execute(text(
-                "SELECT Username FROM Users WHERE Username ILIKE :query"
-            ), {"query": f"%{search_query}%"}).fetchall(),
-        }
 
     return render_template("search.html", results=results, search_query=search_query)
+
+@app.route('/artist/<artist_id>', methods=["GET"])
+def artist_profile(artist_id):
+    # Fetch artist details
+    artist = g.conn.execute(text(
+        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id"
+    ), {"artist_id": artist_id}).fetchone()
+
+    if not artist:
+        return "Artist not found", 404
+
+    # Fetch songs by the artist
+    songs = g.conn.execute(text(
+        "SELECT S.Title, S.SongID FROM Songs S "
+        "JOIN ReleasedUnder R ON S.SongID = R.SongID "
+        "WHERE R.ArtistID = :artist_id"
+    ), {"artist_id": artist_id}).fetchall()
+
+    return render_template("artist_profile.html", artist=artist, songs=songs)
 
 
 if __name__ == "__main__":
