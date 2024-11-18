@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ artist.ArtistName }}'s Profile</title>
+</head>
+<body>
+    <h1>{{ artist.ArtistName }}'s Profile</h1>
+
+    <!-- Artist Details -->
+    <section>
+        <h2>Details</h2>
+        <p><strong>Biography:</strong> {{ artist.ArtistBio }}</p>
+        <p><strong>Country:</strong> {{ artist.Country }}</p>
+    </section>
+
+    <!-- Songs by the Artist -->
+    <section>
+        <h2>Songs</h2>
+        {% if songs %}
+        <ul>
+            {% for song in songs %}
+            <li>
+                <a href="{{ url_for('song_details', song_id=song.SongID) }}">
+                    {{ song.Title }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No songs available for this artist.</p>
+        {% endif %}
+    </section>
+</body>
+</html>
