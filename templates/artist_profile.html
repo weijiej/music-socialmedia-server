@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ artist.ArtistName }}'s Profile</title>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
 </head>
 <body>
     <h1>{{ artist.ArtistName }}'s Profile</h1>
@@ -21,11 +22,7 @@
         {% if songs %}
         <ul>
             {% for song in songs %}
-            <li>
-                <a href="{{ url_for('song_details', song_id=song.SongID) }}">
-                    {{ song.Title }}
-                </a>
-            </li>
+            <li>{{ song.Title }}</li>
             {% endfor %}
         </ul>
         {% else %}
