@@ -8,6 +8,7 @@
 <body>
     <h1>Search Results</h1>
 
+    <!-- Search Form -->
     <form method="POST" action="/search">
         <input type="text" name="search_query" placeholder="Search for artists or users" required>
         <button type="submit">Search</button>
@@ -22,7 +23,7 @@
     <ul>
         {% for artist in results.artists %}
         <li>
-            <a href="{{ url_for('artist_profile', artist_id=artist.ArtistID) }}">
+            <a href="{{ url_for('artist_profile', artist_name=artist.ArtistName) }}">
                 {{ artist.ArtistName }}
             </a>
         </li>
