@@ -8,24 +8,28 @@
     <h1>Search Results for "{{ query }}"</h1>
     
     <!-- Artist Results -->
-    <h2>Artists</h2>
-    {% if artists %}
-        {% for artist_name, details in artists.items() %}
-            <div>
-                <h3>{{ artist_name }}</h3>
-                <p><strong>Bio:</strong> {{ details.artist_bio or 'N/A' }}</p>
-                <p><strong>Country:</strong> {{ details.country or 'N/A' }}</p>
-                <p><strong>Songs:</strong></p>
-                <ul>
-                    {% for song in details.songs %}
-                        <li>{{ song }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No matching artists found.</p>
-    {% endif %}
+   <h2>Artists</h2>
+{% if artists %}
+    {% for artist_name, details in artists.items() %}
+        <div>
+            <h3>{{ artist_name }}</h3>
+            <p><strong>Bio:</strong> {{ details.artist_bio or 'N/A' }}</p>
+            <p><strong>Country:</strong> {{ details.country or 'N/A' }}</p>
+            <p><strong>Songs:</strong></p>
+            <ul>
+                {% for song in details.songs %}
+                    <li>{{ song }}</li>
+                {% endfor %}
+            </ul>
+            <a href="{{ url_for('artist_profile', artist_name=artist_name) }}">
+                View Profile
+            </a>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No matching artists found.</p>
+{% endif %}
+
     
     <!-- User Results -->
     <h2>Users</h2>
