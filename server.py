@@ -305,7 +305,7 @@ def search():
 
         # Search for matching artist names
         artists = g.conn.execute(text(
-            "SELECT ArtistName FROM Artists WHERE ArtistName ILIKE :query"
+          "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
         ), {"query": f"%{search_query}%"}).fetchall()
 
         # Search for matching usernames
