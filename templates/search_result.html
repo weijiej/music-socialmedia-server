@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results for "{{ query }}"</h1>
+    
+    <!-- Artist Results -->
+    <h2>Artists</h2>
+    {% if artists %}
+        {% for artist_name, details in artists.items() %}
+            <div>
+                <h3>{{ artist_name }}</h3>
+                <p><strong>Bio:</strong> {{ details.artist_bio or 'N/A' }}</p>
+                <p><strong>Country:</strong> {{ details.country or 'N/A' }}</p>
+                <p><strong>Songs:</strong></p>
+                <ul>
+                    {% for song in details.songs %}
+                        <li>{{ song }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No matching artists found.</p>
+    {% endif %}
+    
+    <!-- User Results -->
+    <h2>Users</h2>
+    {% if users %}
+        <ul>
+            {% for user in users %}
+                <li>
+                    <strong>Username:</strong> {{ user.username }}<br>
+                    <strong>Date of Birth:</strong> {{ user.dob or 'N/A' }}<br>
+                    <strong>Account Created:</strong> {{ user.date_created or 'N/A' }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No matching users found.</p>
+    {% endif %}
+    
+    <a href="/search">Back to Search</a>
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>
