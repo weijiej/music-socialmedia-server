@@ -276,7 +276,29 @@ def add_comment(song_id):
 
 @app.route('/search', methods=["GET", "POST"])
 def search():
+  if request.method == "POST":
+        search_query = request.form.get("search_query")
 
+        # Search for artists matching the query
+        artists = g.conn.execute(text(
+            "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
+        ), {"query": f"%{search_query}%"}).fetchall()
+
+        # Search for users matching the query
+        users = g.conn.execute(text(
+            "SELECT Username FROM Users WHERE Username ILIKE :query"
+        ), {"query": f"%{search_query}%"}).fetchall()
+
+        # Combine results
+        results = {
+            "artists": artists,
+            "users": users
+        }
+
+        return render_template("search.html", results=results, search_query=search_query)
+
+    # If GET request, render empty search page
+    return render_template("search.html")
     return render_template("search.html", results=results, search_query=search_query)
 
 @app.route('/artist/<artist_id>', methods=["GET"])
