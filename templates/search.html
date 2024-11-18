@@ -15,6 +15,7 @@
     {% if search_query %}
     <h2>Results for "{{ search_query }}"</h2>
 
+    {% if results.artists or results.users %}
     {% if results.artists %}
     <h3>Artists</h3>
     <ul>
@@ -26,8 +27,6 @@
         </li>
         {% endfor %}
     </ul>
-    {% else %}
-    <p>No artists found.</p>
     {% endif %}
 
     {% if results.users %}
@@ -41,8 +40,9 @@
         </li>
         {% endfor %}
     </ul>
+    {% endif %}
     {% else %}
-    <p>No users found.</p>
+    <p>No results found for "{{ search_query }}".</p>
     {% endif %}
     {% endif %}
 </body>
