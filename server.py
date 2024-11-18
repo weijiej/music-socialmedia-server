@@ -274,22 +274,22 @@ def add_comment(song_id):
 
     return redirect(url_for('view_comments', song_id=song_id))
 
-@app.route('/artist/<artist_name>', methods=["GET"])
-def artist_profile(artist_name):
-    # Fetch artist details using artist_name
+@app.route('/artist/<artist_name>/<artist_id>', methods=["GET"])
+def artist_profile(artist_name, artist_id):
+    # Fetch artist details using artist_id
     artist = g.conn.execute(text(
-        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistName = :artist_name"
-    ), {"artist_name": artist_name}).fetchone()
+        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id AND ArtistName = :artist_name"
+    ), {"artist_id": artist_id, "artist_name": artist_name}).fetchone()
 
     if not artist:
         return "Artist not found", 404
 
-    # Fetch songs by the artist using ArtistName
+    # Fetch songs by the artist
     songs = g.conn.execute(text(
         "SELECT S.Title FROM Songs S "
         "JOIN ReleasedUnder R ON S.SongID = R.SongID "
-        "WHERE R.ArtistID = (SELECT ArtistID FROM Artists WHERE ArtistName = :artist_name)"
-    ), {"artist_name": artist_name}).fetchall()
+        "WHERE R.ArtistID = :artist_id"
+    ), {"artist_id": artist_id}).fetchall()
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
 
@@ -303,7 +303,7 @@ def search():
 
         # Perform a search across artists and users
         artists = g.conn.execute(text(
-            "SELECT ArtistName FROM Artists WHERE ArtistName ILIKE :query"
+            "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
         ), {"query": f"%{search_query}%"}).fetchall()
 
         users = g.conn.execute(text(
@@ -312,11 +312,11 @@ def search():
 
         # Convert query results into dictionaries
         results = {
-            "artists": [{"ArtistName": artist[0]} for artist in artists],
+            "artists": [{"ArtistName": artist[0], "ArtistID": artist[1]} for artist in artists],
             "users": [{"Username": user[0]} for user in users],
         }
 
-        # Print results for debugging
+        # Debugging output
         print("Artists fetched:", results["artists"])
         print("Users fetched:", results["users"])
 
