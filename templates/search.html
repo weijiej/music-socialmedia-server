@@ -25,7 +25,8 @@
     <ul>
         {% for artist in results.artists %}
         <li>
-            <a href="{{ url_for('artist_profile', artist_name=artist.ArtistName) }}">
+            <!-- Generate a link using ArtistID for the artist profile -->
+            <a href="{{ url_for('artist_profile', artist_id=artist.ArtistID) }}">
                 {{ artist.ArtistName }}
             </a>
         </li>
@@ -41,6 +42,7 @@
     <ul>
         {% for user in results.users %}
         <li>
+            <!-- Generate a link for the user profile -->
             <a href="{{ url_for('user_profile', username=user.Username) }}">
                 {{ user.Username }}
             </a>
