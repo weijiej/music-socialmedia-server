@@ -314,10 +314,9 @@ def search():
         ), {"query": f"%{search_query}%"}).fetchall()
 
         # Convert results into dictionaries
-        results = {
-            "artists": [{"ArtistName": artist[0]} for artist in artists],
-            "users": [{"Username": user[0]} for user in users],
-        }
+        results = { 
+          "artists": [{"ArtistName": artist[0], "ArtistID": artist[1]} for artist in artists], 
+          "users": [{"Username": user[0]} for user in users], }
 
         # Debugging output for clarity
         print("Search Query:", search_query)
