@@ -284,12 +284,11 @@ def artist_profile(artist_name):
     if not artist:
         return "Artist not found", 404
 
-    # Fetch songs by the artist using only ArtistName
+    # Fetch songs by the artist using ArtistName
     songs = g.conn.execute(text(
         "SELECT S.Title FROM Songs S "
         "JOIN ReleasedUnder R ON S.SongID = R.SongID "
-        "JOIN Artists A ON R.ArtistID = A.ArtistID "
-        "WHERE A.ArtistName = :artist_name"
+        "WHERE R.ArtistID = (SELECT ArtistID FROM Artists WHERE ArtistName = :artist_name)"
     ), {"artist_name": artist_name}).fetchall()
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
@@ -303,15 +302,23 @@ def search():
         search_query = request.form.get("search_query")
 
         # Perform a search across artists and users
-        results = {
-            "artists": g.conn.execute(text(
-                "SELECT ArtistName FROM Artists WHERE ArtistName ILIKE :query"
-            ), {"query": f"%{search_query}%"}).fetchall(),
+        artists = g.conn.execute(text(
+            "SELECT ArtistName FROM Artists WHERE ArtistName ILIKE :query"
+        ), {"query": f"%{search_query}%"}).fetchall()
 
-            "users": g.conn.execute(text(
-                "SELECT Username FROM Users WHERE Username ILIKE :query"
-            ), {"query": f"%{search_query}%"}).fetchall(),
+        users = g.conn.execute(text(
+            "SELECT Username FROM Users WHERE Username ILIKE :query"
+        ), {"query": f"%{search_query}%"}).fetchall()
+
+        # Convert query results into dictionaries
+        results = {
+            "artists": [{"ArtistName": artist[0]} for artist in artists],
+            "users": [{"Username": user[0]} for user in users],
         }
+
+        # Print results for debugging
+        print("Artists fetched:", results["artists"])
+        print("Users fetched:", results["users"])
 
     return render_template("search.html", results=results, search_query=search_query)
 
