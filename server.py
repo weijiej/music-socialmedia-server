@@ -284,11 +284,12 @@ def artist_profile(artist_name):
     if not artist:
         return "Artist not found", 404
 
-    # Fetch songs by the artist
+    # Fetch songs by the artist using only ArtistName
     songs = g.conn.execute(text(
-        "SELECT S.Title, S.SongID FROM Songs S "
+        "SELECT S.Title FROM Songs S "
         "JOIN ReleasedUnder R ON S.SongID = R.SongID "
-        "WHERE R.ArtistID = (SELECT ArtistID FROM Artists WHERE ArtistName = :artist_name)"
+        "JOIN Artists A ON R.ArtistID = A.ArtistID "
+        "WHERE A.ArtistName = :artist_name"
     ), {"artist_name": artist_name}).fetchall()
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
