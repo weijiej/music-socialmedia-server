@@ -498,9 +498,30 @@ def add_to_playlist(song_title):
         return redirect('/login')
 
     username = session['username']
-    playlist_id = request.form.get('playlist_id')  # Assume playlist_id is passed from the form
 
     try:
+        # Check if the user has a default playlist
+        playlist = g.conn.execute(text("""
+            SELECT playlistid FROM user_playlists WHERE username = :username
+        """), {"username": username}).fetchone()
+
+        if not playlist:
+            # If no default playlist exists, create one dynamically
+            playlist_id = f"PL-{username[:5]}-{uuid.uuid4().hex[:5]}"  # Example: "PL-user1-ab123"
+            g.conn.execute(text("""
+                INSERT INTO user_playlists (playlistid, playlistname, description, username, since)
+                VALUES (:playlistid, :playlistname, :description, :username, CURRENT_DATE)
+            """), {
+                "playlistid": playlist_id,
+                "playlistname": "My Playlist",
+                "description": "Default playlist",
+                "username": username
+            })
+            g.conn.commit()
+        else:
+            # Use the existing playlist
+            playlist_id = playlist[0]
+
         # Fetch the song ID using the song title
         song = g.conn.execute(text("""
             SELECT songid FROM songs WHERE title = :title
@@ -521,9 +542,9 @@ def add_to_playlist(song_title):
         }).fetchone()
 
         if existing_entry:
-            flash(f"'{song_title}' is already in this playlist.", "info")
+            flash(f"'{song_title}' is already in your playlist.", "info")
         else:
-            # Add the song to the specified playlist
+            # Add the song to the user's playlist
             g.conn.execute(text("""
                 INSERT INTO playlist_songs (playlistid, songid) VALUES (:playlist_id, :song_id)
             """), {
@@ -537,6 +558,7 @@ def add_to_playlist(song_title):
         flash("An unexpected error occurred. Please try again later.", "danger")
     
     return redirect(request.referrer)
+
 
 
 
