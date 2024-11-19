@@ -406,10 +406,20 @@ def user_profile():
         # Turn queries into lists
         playlists_list = []
         for playlist in playlists:
-            playlists_list.append({
+           songs = g.conn.execute(text("""
+                SELECT s.Title, a.ArtistName
+                FROM playlist_songs ps
+                JOIN songs s ON ps.SongID = s.SongID
+                JOIN released_under ru ON s.SongID = ru.SongID
+                JOIN artists a ON ru.ArtistID = a.ArtistID
+                WHERE ps.PlaylistID = :playlist_id
+            """), {'playlist_id': playlist[0]}).fetchall()
+            
+          playlists_list.append({
                 'PlaylistID': playlist[0],
                 'PlaylistName': playlist[1],
-                'Since': playlist[2]
+                'Since': playlist[2],
+                'Songs': [{'Title': song[0], 'ArtistName': song[1]} for song in songs]
             })
 
         artists_list = []
@@ -488,35 +498,36 @@ def add_to_playlist(song_title):
         return redirect('/login')
 
     username = session['username']
-    
+    playlist_id = request.form.get('playlist_id')  # Assume playlist_id is passed from the form
+
     try:
         # Fetch the song ID using the song title
         song = g.conn.execute(text("""
             SELECT songid FROM songs WHERE title = :title
         """), {"title": song_title}).fetchone()
-        
+
         if not song:
             flash("Song not found.", "danger")
             return redirect(request.referrer)
 
         song_id = song[0]
 
-        # Check if the song is already in the user's playlist
+        # Check if the song is already in the playlist
         existing_entry = g.conn.execute(text("""
-            SELECT * FROM favorites WHERE username = :username AND songid = :song_id
+            SELECT * FROM playlist_songs WHERE playlistid = :playlist_id AND songid = :song_id
         """), {
-            "username": username,
+            "playlist_id": playlist_id,
             "song_id": song_id
         }).fetchone()
 
         if existing_entry:
-            flash(f"'{song_title}' is already in your playlist.", "info")
+            flash(f"'{song_title}' is already in this playlist.", "info")
         else:
-            # Add the song to the user's playlist
+            # Add the song to the specified playlist
             g.conn.execute(text("""
-                INSERT INTO favorites (username, songid) VALUES (:username, :song_id)
+                INSERT INTO playlist_songs (playlistid, songid) VALUES (:playlist_id, :song_id)
             """), {
-                "username": username,
+                "playlist_id": playlist_id,
                 "song_id": song_id
             })
             g.conn.commit()
