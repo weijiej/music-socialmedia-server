@@ -443,12 +443,24 @@ def user_profile():
 @app.route('/follow_artist', methods=['POST'])
 def follow_artist():
     if 'username' not in session:
+        flash("You must be logged in to follow an artist.", "danger")
         return redirect('/login')
 
-    artist_id = request.form.get('artist_id')
+    artist_name = request.form.get('artist_name')  # Get artist name from form
     username = session['username']
 
     try:
+        # Fetch the artist ID based on the artist's name
+        artist = g.conn.execute(text("""
+            SELECT artistid FROM artists WHERE artistname = :artist_name
+        """), {"artist_name": artist_name}).fetchone()
+
+        if not artist:
+            flash("This artist does not exist.", "danger")
+            return redirect(request.referrer)
+
+        artist_id = artist[0]  # Extract artist ID
+
         # Check if the user already follows the artist
         existing_follow = g.conn.execute(text("""
             SELECT * FROM follows WHERE username = :username AND artistid = :artist_id
@@ -473,9 +485,8 @@ def follow_artist():
 
     except Exception as e:
         print(f"Error following artist: {e}")
-        flash("An error occurred while trying to follow the artist. Please try again.", "danger")
+        flash("An unexpected error occurred. Please try again.", "danger")
 
-    # Stay on the same artist profile page
     return redirect(request.referrer)
 
 
