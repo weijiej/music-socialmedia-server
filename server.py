@@ -446,20 +446,14 @@ def follow_artist():
         flash("You must be logged in to follow an artist.", "danger")
         return redirect('/login')
 
-    artist_name = request.form.get('artist_name')  # Get artist name from form
+    artist_name = request.form.get('artist_name')  # Fetch artist name from the form
     username = session['username']
 
     try:
-        # Fetch the artist ID based on the artist's name
-        artist = g.conn.execute(text("""
+        # Fetch artist_id using artist_name
+        artist_id = g.conn.execute(text("""
             SELECT artistid FROM artists WHERE artistname = :artist_name
-        """), {"artist_name": artist_name}).fetchone()
-
-        if not artist:
-            flash("This artist does not exist.", "danger")
-            return redirect(request.referrer)
-
-        artist_id = artist[0]  # Extract artist ID
+        """), {"artist_name": artist_name}).scalar()  # Use scalar() to fetch a single value directly
 
         # Check if the user already follows the artist
         existing_follow = g.conn.execute(text("""
@@ -479,14 +473,15 @@ def follow_artist():
                 'artist_id': artist_id
             })
             g.conn.commit()
-            flash("You are now following this artist!", "success")
+            flash(f"You are now following {artist_name}!", "success")
         else:
-            flash("You are already following this artist.", "info")
+            flash(f"You are already following {artist_name}.", "info")
 
     except Exception as e:
         print(f"Error following artist: {e}")
         flash("An unexpected error occurred. Please try again.", "danger")
 
+    # Stay on the same artist profile page
     return redirect(request.referrer)
 
 
