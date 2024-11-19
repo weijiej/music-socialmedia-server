@@ -132,12 +132,11 @@
     <ul>
         {% for song in songs %}
         <li>
-            <form action="{{ url_for('add_to_playlist') }}" method="POST" style="display: inline;">
-                <input type="hidden" name="song_id" value="{{ song['SongID'] }}">
-                <button type="submit" style="background: none; color: #0366d6; border: none; cursor: pointer; text-decoration: underline;">
-                    {{ song["Title"] }}
-                </button>
-            </form>
+            <a href="{{ url_for('add_to_playlist', song_id=song['SongID']) }}" 
+               style="text-decoration: none; color: #0366d6;">
+                {{ song["Title"] }}
+            </a> 
+            <span style="color: gray;">(Click to add to your playlist)</span>
         </li>
         {% endfor %}
     </ul>
