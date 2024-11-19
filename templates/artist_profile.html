@@ -8,6 +8,34 @@
 </head>
 <body>
     <h1>{{ artist["ArtistName"] }}'s Profile</h1>
+
+     <!-- Flash Messages -->
+    <div style="margin-bottom: 20px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}" style="padding: 10px; 
+                        margin-bottom: 10px; 
+                        border-radius: 4px;
+                        {% if category == 'success' %}
+                            background-color: #d4edda; 
+                            border: 1px solid #c3e6cb; 
+                            color: #155724;
+                        {% elif category == 'info' %}
+                            background-color: #d1ecf1; 
+                            border: 1px solid #bee5eb; 
+                            color: #0c5460;
+                        {% elif category == 'danger' %}
+                            background-color: #f8d7da; 
+                            border: 1px solid #f5c6cb; 
+                            color: #721c24;
+                        {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
     
     <!-- Back to Dashboard Button -->
     <div style="margin-bottom: 20px;">
