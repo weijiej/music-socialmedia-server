@@ -313,8 +313,8 @@ def search():
 
         # Convert results to dictionaries
         results = {
-            "artists": [{"ArtistName": row["ArtistName"], "ArtistID": row["ArtistID"]} for row in artists],
-            "users": [{"Username": row["Username"]} for row in users],
+            "artists": [{"ArtistName": artist[0], "ArtistID": artist[1]} for artist in artists],
+            "users": [{"Username": user[0]} for user in users],
         }
 
     return render_template("search.html", results=results, search_query=search_query)
