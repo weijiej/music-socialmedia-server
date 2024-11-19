@@ -8,6 +8,20 @@
 </head>
 <body>
     <h1>{{ artist["ArtistName"] }}'s Profile</h1>
+    
+     <!-- Back to Dashboard Button -->
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('dashboard') }}" 
+           style="padding: 10px 20px; 
+                  background-color: lightblue; 
+                  color: black; 
+                  border: 1px solid black; 
+                  border-radius: 4px; 
+                  text-decoration: none; 
+                  font-size: 16px;">
+            Back to Dashboard
+        </a>
+    </div>
 
     <!-- Artist Details -->
     <section>
