@@ -362,7 +362,6 @@ def user_profile_view(username):
         'username': username
     }).fetchall()
 
-    # Use tuple unpacking to manually construct dictionaries
     playlists = [{"PlaylistID": row[0], "PlaylistName": row[1], "Since": row[2]} for row in playlists]
     followed_artists = [{"ArtistID": row[0], "ArtistName": row[1], "Since": row[2]} for row in followed_artists]
     favorited_songs = [{"SongID": row[0], "Title": row[1], "ArtistName": row[2]} for row in favorited_songs]
@@ -439,6 +438,46 @@ def user_profile():
         print(f"Error loading profile data: {e}")
         flash("Error loading profile information", "info")
         return redirect('/dashboard')
+
+#follow artist function 
+@app.route('/follow_artist', methods=['POST'])
+def follow_artist():
+    if 'username' not in session:
+        return redirect('/login')
+
+    artist_id = request.form.get('artist_id')
+    username = session['username']
+
+    try:
+        # Check if the user already follows the artist
+        existing_follow = g.conn.execute(text("""
+            SELECT * FROM follows WHERE username = :username AND artistid = :artist_id
+        """), {
+            'username': username,
+            'artist_id': artist_id
+        }).fetchone()
+
+        if not existing_follow:
+            # Insert the follow relationship
+            g.conn.execute(text("""
+                INSERT INTO follows (username, artistid)
+                VALUES (:username, :artist_id)
+            """), {
+                'username': username,
+                'artist_id': artist_id
+            })
+            g.conn.commit()
+            flash(f"You are now following this artist!", "success")
+        else:
+            flash(f"You are already following this artist.", "info")
+
+    except Exception as e:
+        print(f"Error following artist: {e}")
+        flash("An error occurred while trying to follow the artist. Please try again.", "danger")
+
+    # Stay on the same artist profile page
+    return redirect(request.referrer)
+
 
 if __name__ == "__main__":
   import click
