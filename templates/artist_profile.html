@@ -57,10 +57,29 @@
             margin-bottom: 10px;
         }
 
-        .song-link {
+        li a {
             color: #0366d6;
             text-decoration: none;
             cursor: pointer;
+        }
+
+        li a:hover {
+            text-decoration: underline;
+        }
+
+        form button {
+            font-size: 16px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        form button:hover {
+            background-color: #218838;
         }
 
         .alert {
@@ -76,36 +95,18 @@
             color: #155724;
         }
 
-        .alert.error {
+        .alert.info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert.danger {
             background-color: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
     </style>
-    <script>
-        async function addToPlaylist(songID, songTitle) {
-            try {
-                const response = await fetch(`/add_to_playlist/${songID}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                const data = await response.json();
-                const messageBox = document.getElementById('message-box');
-                if (data.success) {
-                    messageBox.innerHTML = `<div class="alert success">Successfully added "${songTitle}" to your playlist!</div>`;
-                } else {
-                    messageBox.innerHTML = `<div class="alert error">Failed to add "${songTitle}" to your playlist. ${data.message}</div>`;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                const messageBox = document.getElementById('message-box');
-                messageBox.innerHTML = `<div class="alert error">An unexpected error occurred. Please try again later.</div>`;
-            }
-        }
-    </script>
 </head>
 <body>
     <div class="container">
@@ -115,7 +116,17 @@
         <h1>{{ artist["ArtistName"] }}'s Profile</h1>
 
         <!-- Flash Messages -->
-        <div id="message-box"></div>
+        <div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
 
         <!-- Artist Details -->
         <section>
@@ -132,9 +143,7 @@
             <ul>
                 {% for song in songs %}
                 <li>
-                    <a href="javascript:void(0)" class="song-link" onclick="addToPlaylist('{{ song['SongID'] }}', '{{ song['Title'] }}')">
-                        {{ song["Title"] }}
-                    </a>
+                    <a href="{{ url_for('add_to_playlist', song_id=song['SongID']) }}">{{ song["Title"] }}</a>
                 </li>
                 {% endfor %}
             </ul>
