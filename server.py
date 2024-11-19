@@ -277,30 +277,29 @@ def add_comment(song_id):
 #artist's profile page
 @app.route('/artist/<artist_id>', methods=["GET"])
 def artist_profile(artist_id):
+    # Fetch artist details by ID
     artist = g.conn.execute(text(
         "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchone()
 
     if not artist:
-        return render_template("error.html", message="Artist not found"), 404
-      
-    print(f"Fetched artist: {artist}")
-  
+        return f"<h1>Artist not found</h1><p>The artist with ID {artist_id} does not exist.</p><a href='/search'>Back to Search</a>", 404
+
+    artist_dict = {
+        "ArtistName": artist[0],  # Ensure the name is fetched correctly
+        "ArtistBio": artist[1],
+        "Country": artist[2]
+    }
+
+    # Fetch songs released by the artist
     songs = g.conn.execute(text(
         "SELECT S.Title, S.SongID FROM Songs S JOIN Released_Under R ON S.SongID = R.SongID WHERE R.ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchall()
 
-    artist_dict = {
-        "ArtistName": artist[0],
-        "ArtistBio": artist[1],
-        "Country": artist[2]
-    }
-    print(f"Artist passed to template: {artist_dict}")
+    # Convert songs to a list of dictionaries
+    songs_list = [{"Title": row[0], "SongID": row[1]} for row in songs]
 
-    # Convert to list of dictionaries
-    songs = [{"Title": row[0], "SongID": row[1]} for row in songs]
-
-    return render_template("artist_profile.html", artist=artist, songs=songs)
+    return render_template("artist_profile.html", artist=artist_dict, songs=songs_list)
 
 @app.route('/search', methods=["GET", "POST"])
 def search():
