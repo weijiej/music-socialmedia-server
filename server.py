@@ -290,7 +290,7 @@ def artist_profile(artist_id):
         "SELECT S.Title, S.SongID FROM Songs S JOIN Released_Under R ON S.SongID = R.SongID WHERE R.ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchall()
 
-   artist_dict = {
+    artist_dict = {
         "ArtistName": artist[0],
         "ArtistBio": artist[1],
         "Country": artist[2]
