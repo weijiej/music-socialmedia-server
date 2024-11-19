@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{  artist["ArtistName"] }}'s Profile</title>
+    <title>{{ artist["ArtistName"] }}'s Profile</title>
     <link rel="stylesheet" type="text/css" href="/static/styles.css">
 </head>
 <body>
-    <h1>{{  artist["ArtistName"] }}'s Profile</h1>
+    <h1>{{ artist["ArtistName"] }}'s Profile</h1>
 
     <!-- Artist Details -->
     <section>
         <h2>Details</h2>
-        <p><strong>Biography:</strong> {{ artist.ArtistBio }}</p>
-        <p><strong>Country:</strong> {{ artist.Country }}</p>
+        <p><strong>Biography:</strong> {{ artist["ArtistBio"] or "No biography available." }}</p>
+        <p><strong>Country:</strong> {{ artist["Country"] or "Unknown" }}</p>
     </section>
 
     <!-- Songs by the Artist -->
@@ -22,7 +22,7 @@
         {% if songs %}
         <ul>
             {% for song in songs %}
-            <li>{{ song.Title }}</li>
+            <li>{{ song["Title"] }}</li>
             {% endfor %}
         </ul>
         {% else %}
