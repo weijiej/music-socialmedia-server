@@ -116,55 +116,84 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Back to Dashboard Link -->
-        <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
-
-        <h1>{{ artist["ArtistName"] }}'s Profile</h1>
-
+    <div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <div style="margin-bottom: 20px;">
+            <a href="{{ url_for('dashboard') }}" 
+               style="text-decoration: none; color: #0366d6;">
+                ← Back to Dashboard
+            </a>
+        </div>
+    
+        <h1 style="margin-bottom: 30px;">{{ artist["ArtistName"] }}'s Profile</h1>
+    
         <!-- Flash Messages -->
-        <div>
+        <div style="margin-bottom: 20px;">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert {{ category }}">
+                        <div class="alert {{ category }}" style="padding: 10px; 
+                            margin-bottom: 10px; 
+                            border-radius: 4px;
+                            {% if category == 'success' %}
+                                background-color: #d4edda; 
+                                border: 1px solid #c3e6cb; 
+                                color: #155724;
+                            {% elif category == 'info' %}
+                                background-color: #d1ecf1; 
+                                border: 1px solid #bee5eb; 
+                                color: #0c5460;
+                            {% endif %}">
                             {{ message }}
                         </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
         </div>
-
-        <!-- Artist Details -->
-        <section>
-            <h2>Details</h2>
+    
+        <div style="margin-bottom: 30px;">
+            <h2 style="color: #24292e; margin-bottom: 15px;">Details</h2>
             <p><strong>Biography:</strong> {{ artist["ArtistBio"] or "No biography available." }}</p>
             <p><strong>Country:</strong> {{ artist["Country"] or "Unknown" }}</p>
-        </section>
-
-        <!-- Songs by the Artist -->
-        <section>
-            <h2>Songs</h2>
-            <p>Click on a song to add it to your playlist:</p>
+        </div>
+    
+        <div style="margin-bottom: 30px;">
+            <h2 style="color: #24292e; margin-bottom: 15px;">Songs</h2>
+            <p>Click on a song to add it to your favorites:</p>
+            
             {% if songs %}
-            <ul>
-                {% for song in songs %}
-                <li>
-                    <form action="{{ url_for('add_to_playlist', song_title=song['Title']) }}" method="POST">
-                        <button type="submit">{{ song["Title"] }}</button>
-                    </form>
-                </li>
-                {% endfor %}
-            </ul>
+                <ul style="list-style: none; padding: 0;">
+                    {% for song in songs %}
+                        <li style="margin-bottom: 10px;">
+                            <form action="{{ url_for('add_favorite') }}" method="POST" style="display: inline;">
+                                <input type="hidden" name="song_id" value="{{ song.song_id }}">
+                                <button type="submit" 
+                                        style="background: none; 
+                                               border: none; 
+                                               color: #0366d6; 
+                                               text-decoration: underline; 
+                                               cursor: pointer; 
+                                               padding: 0;
+                                               font-size: 16px;">
+                                    {{ song.title }}
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
             {% else %}
-            <p>No songs available for this artist.</p>
+                <p>No songs available for this artist.</p>
             {% endif %}
-        </section>
-
-        <!-- Follow Artist Button -->
+        </div>
+    
         <form action="{{ url_for('follow_artist') }}" method="POST">
             <input type="hidden" name="artist_name" value="{{ artist['ArtistName'] }}">
-            <button type="submit">
+            <button type="submit" 
+                    style="padding: 8px 16px; 
+                           background-color: #0366d6; 
+                           color: white; 
+                           border: none; 
+                           border-radius: 4px; 
+                           cursor: pointer;">
                 Follow Artist
             </button>
         </form>
