@@ -4,58 +4,150 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results</title>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #0366d6;
+            text-align: center;
+        }
+
+        a.back-link {
+            text-decoration: none;
+            color: #0366d6;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        form input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        form button {
+            padding: 10px 20px;
+            background-color: #0366d6;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        form button:hover {
+            background-color: #024da3;
+        }
+
+        h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        li form button {
+            font-size: 16px;
+            padding: 8px 16px;
+            background-color: #28a745;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        li form button:hover {
+            background-color: #218838;
+        }
+
+        .message {
+            color: #555;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <h1>Search Results</h1>
+    <div class="container">
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
 
-     <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-        <div style="margin-bottom: 20px;">
-            <a href="{{ url_for('dashboard') }}" 
-               style="text-decoration: none; color: #0366d6;">
-                ← Back to Dashboard
-            </a>
-        </div>
-         
-    <!-- Search Form -->
-    <form method="POST" action="/search">
-        <input type="text" name="search_query" placeholder="Search for artists or users" required>
-        <button type="submit">Search</button>
-    </form>
+        <h1>Search Results</h1>
 
-    {% if search_query %}
-    <h2>Results for "{{ search_query }}"</h2>
+        <!-- Search Form -->
+        <form method="POST" action="/search">
+            <input type="text" name="search_query" placeholder="Search for artists or users" required>
+            <button type="submit">Search</button>
+        </form>
 
-    <!-- Artist Results -->
-    <h3>Artists</h3>
-    {% if results.artists %}
-    <ul>
-        {% for artist in results.artists %}
-        <li>
-            <form method="GET" action="{{ url_for('artist_profile', artist_id=artist['ArtistID']) }}" style="display: inline;">
-                <button type="submit">{{ artist['ArtistName'] }}'s Profile</button>
-            </form>
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>No artists found.</p>
-    {% endif %}
+        {% if search_query %}
+        <h2>Results for "{{ search_query }}"</h2>
 
-    <!-- User Results -->
-    <h3>Users</h3>
-    {% if results.users %}
-    <ul>
-        {% for user in results.users %}
-        <li>
-            <form method="GET" action="{{ url_for('user_profile_view', username=user['Username']) }}" style="display: inline;">
-                <button type="submit">{{ user['Username'] }}'s Profile</button>
-            </form>
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>No users found.</p>
-    {% endif %}
-    {% endif %}
+        <!-- Artist Results -->
+        <h3>Artists</h3>
+        {% if results.artists %}
+        <ul>
+            {% for artist in results.artists %}
+            <li>
+                <form method="GET" action="{{ url_for('artist_profile', artist_id=artist['ArtistID']) }}">
+                    <button type="submit">{{ artist['ArtistName'] }}'s Profile</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="message">No artists found.</p>
+        {% endif %}
+
+        <!-- User Results -->
+        <h3>Users</h3>
+        {% if results.users %}
+        <ul>
+            {% for user in results.users %}
+            <li>
+                <form method="GET" action="{{ url_for('user_profile_view', username=user['Username']) }}">
+                    <button type="submit">{{ user['Username'] }}'s Profile</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="message">No users found.</p>
+        {% endif %}
+        {% endif %}
+    </div>
 </body>
 </html>
