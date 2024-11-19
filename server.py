@@ -1,4 +1,5 @@
 import os
+import uuid
 import spotipy
   # accessible as a variable in index.html:
 from sqlalchemy import *
