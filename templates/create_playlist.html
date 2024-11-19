@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="margin-bottom: 20px;">
+            <a href="{{ url_for('user_profile') }}" 
+               style="text-decoration: none; color: #0366d6;">
+                ← Back to Profile
+            </a>
+        </div>
+    
+        <h1 style="text-align: center; margin-bottom: 30px;">Create New Playlist</h1>
+    
+        <!-- Flash Messages -->
+        <div style="margin-bottom: 20px;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}" style="padding: 10px; 
+                            margin-bottom: 10px; 
+                            border-radius: 4px;
+                            {% if category == 'success' %}
+                                background-color: #d4edda; 
+                                border: 1px solid #c3e6cb; 
+                                color: #155724;
+                            {% elif category == 'info' %}
+                                background-color: #d1ecf1; 
+                                border: 1px solid #bee5eb; 
+                                color: #0c5460;
+                            {% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    
+        <form action="{{ url_for('create_playlist') }}" method="POST">
+            <!-- Playlist Name -->
+            <div style="margin-bottom: 20px;">
+                <label for="playlist_name" style="display: block; margin-bottom: 8px; font-weight: 500;">
+                    Playlist Name:
+                </label>
+                <input type="text" 
+                       id="playlist_name" 
+                       name="playlist_name" 
+                       required 
+                       style="width: 100%; 
+                              padding: 8px; 
+                              border: 1px solid #ddd; 
+                              border-radius: 4px;">
+            </div>
+    
+            <!-- Playlist Description -->
+            <div style="margin-bottom: 20px;">
+                <label for="description" style="display: block; margin-bottom: 8px; font-weight: 500;">
+                    Description:
+                </label>
+                <textarea id="description" 
+                          name="description" 
+                          rows="4" 
+                          style="width: 100%; 
+                                 padding: 8px; 
+                                 border: 1px solid #ddd; 
+                                 border-radius: 4px; 
+                                 resize: vertical;"
+                          placeholder="Add an optional description for your playlist"></textarea>
+            </div>
+    
+            <!-- Playlist Status -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+                    Playlist Status:
+                </label>
+                <div style="display: flex; align-items: center;">
+                    <input type="checkbox" 
+                           id="is_public" 
+                           name="is_public" 
+                           value="true" 
+                           style="margin-right: 8px;">
+                    <label for="is_public">Make this playlist public</label>
+                </div>
+            </div>
+    
+            <!-- Song Count (Read-only) -->
+            <div style="margin-bottom: 20px; 
+                        padding: 10px; 
+                        background-color: #f6f8fa; 
+                        border-radius: 4px; 
+                        border: 1px solid #e1e4e8;">
+                <label style="font-weight: 500;">Total Songs:</label>
+                <span>0</span>
+                <span style="color: #666; font-size: 14px;"> (Songs can be added after creating the playlist)</span>
+            </div>
+    
+            <button type="submit" 
+                    style="width: 100%;
+                           padding: 10px;
+                           background-color: #0366d6;
+                           color: white;
+                           border: none;
+                           border-radius: 6px;
+                           cursor: pointer;
+                           font-size: 16px;">
+                Create Playlist
+            </button>
+        </form>
+    </div>
+</html>
