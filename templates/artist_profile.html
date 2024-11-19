@@ -43,5 +43,22 @@
         <p>No songs available for this artist.</p>
         {% endif %}
     </section>
+    <!-- Follow Artist Button -->
+<form action="{{ url_for('follow_artist') }}" method="POST">
+    <input type="hidden" name="artist_id" value="{{ artist['ArtistID'] }}">
+    <button type="submit" 
+            style="padding: 10px 20px; 
+                   background-color: green; 
+                   color: white; 
+                   border: none; 
+                   border-radius: 4px; 
+                   cursor: pointer;">
+        Follow Artist
+    </button>
+</form>
+{% else %}
+<p>You are already following this artist.</p>
+{% endif %}
+</form>
 </body>
 </html>
