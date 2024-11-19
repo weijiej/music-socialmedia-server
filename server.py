@@ -481,32 +481,43 @@ def follow_artist():
     return redirect(request.referrer)
 
 #add playlist function
-@app.route('/add_to_playlist/<song_id>', methods=['POST'])
+@app.route('/add_to_playlist/<string:song_id>', methods=['POST'])
 def add_to_playlist(song_id):
+    # Check if user is logged in
     if 'username' not in session:
-        return jsonify({"success": False, "message": "You must be logged in to add songs to a playlist."}), 401
+        flash("You need to log in to add songs to your playlist.", "danger")
+        return redirect(url_for('login'))
 
     username = session['username']
 
     try:
-        # Check if the song is already in the playlist
-        existing_entry = g.conn.execute(text("""
-            SELECT * FROM favorites WHERE username = :username AND songid = :songid
-        """), {"username": username, "songid": song_id}).fetchone()
+        # Check if the song is already in the user's playlist
+        existing_playlist_entry = g.conn.execute(text("""
+            SELECT * FROM user_playlists WHERE username = :username AND playlistname = :song_id
+        """), {
+            "username": username,
+            "song_id": song_id
+        }).fetchone()
 
-        if not existing_entry:
+        if existing_playlist_entry:
+            flash("This song is already in your playlist.", "info")
+        else:
             # Insert the song into the user's playlist
             g.conn.execute(text("""
-                INSERT INTO favorites (username, songid)
-                VALUES (:username, :songid)
-            """), {"username": username, "songid": song_id})
+                INSERT INTO user_playlists (username, playlistname, since)
+                VALUES (:username, :song_id, CURRENT_DATE)
+            """), {
+                "username": username,
+                "song_id": song_id
+            })
             g.conn.commit()
-            return jsonify({"success": True}), 200
-        else:
-            return jsonify({"success": False, "message": "Song is already in your playlist."}), 400
+            flash("The song has been successfully added to your playlist!", "success")
     except Exception as e:
-        print(f"Error adding to playlist: {e}")
-        return jsonify({"success": False, "message": "An unexpected error occurred."}), 500
+        print(f"Error adding song to playlist: {e}")
+        flash("An unexpected error occurred. Please try again later.", "danger")
+
+    # Redirect back to the artist profile
+    return redirect(request.referrer)
 
 
 if __name__ == "__main__":
