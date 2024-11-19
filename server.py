@@ -448,10 +448,6 @@ def follow_artist():
     artist_id = request.form.get('artist_id')
     username = session['username']
 
-    if not artist_id:
-        flash("Invalid artist ID.", "danger")
-        return redirect(request.referrer)
-
     try:
         # Check if the user already follows the artist
         existing_follow = g.conn.execute(text("""
