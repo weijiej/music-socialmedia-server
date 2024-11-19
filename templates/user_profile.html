@@ -12,56 +12,86 @@
             <h1>{{ username }}'s Profile</h1>
         </div>
     
-        <!-- Favorite Songs Section -->
+        <!-- Favorited Songs Section -->
+        <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <!-- Previous sections remain the same -->
+
+    <!-- Favorited Songs Section -->
+    <div style="margin-bottom: 40px;">
+        <h2 style="color: #24292e; margin-bottom: 20px;">Favorited Songs</h2>
+        <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
+            {% if favorites %}
+                <div style="display: inline-flex; gap: 15px;">
+                    {% for song in favorites %}
+                    <div style="border: 1px solid #e1e4e8; 
+                                padding: 15px; 
+                                border-radius: 8px;
+                                background-color: #f6f8fa;
+                                min-width: 200px;">
+                        <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ song.Title }}</h3>
+                        <p style="color: #586069; margin: 5px 0;">by {{ song.ArtistName }}</p>
+                        <!-- Button to unfavorite a song -->
+                        <form action="{{ url_for('remove_favorite') }}" method="POST" style="margin-top: 10px;">
+                            <input type="hidden" name="song_id" value="{{ song.SongID }}">
+                            <button type="submit" 
+                                    style="background-color: #dc3545;
+                                           color: white;
+                                           border: none;
+                                           padding: 4px 8px;
+                                           border-radius: 4px;
+                                           cursor: pointer;
+                                           font-size: 12px;">
+                                Remove
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: #586069;">No favorite songs yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Rest of the template remains the same -->
+</div>
+    
+        <!-- Playlists Section -->
         <div style="margin-bottom: 40px;">
-            <h2 style="color: #24292e; margin-bottom: 20px;">Your Favorite Songs</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #24292e; margin: 0;">Playlists</h2>
+                <a href="{{ url_for('create_playlist') }}" 
+                   style="text-decoration: none;
+                          padding: 8px 16px;
+                          background-color: #0366d6;
+                          color: white;
+                          border-radius: 6px;
+                          font-size: 14px;">
+                    Create Playlist
+                </a>
+            </div>
             <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
-                {% if favorites %}
+                {% if playlists %}
                     <div style="display: inline-flex; gap: 15px;">
-                        {% for song in favorites %}
+                        {% for playlist in playlists %}
                         <div style="border: 1px solid #e1e4e8; 
                                     padding: 15px; 
                                     border-radius: 8px;
                                     background-color: #f6f8fa;
                                     min-width: 200px;">
-                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ song.Title }}</h3>
-                            <p style="color: #586069; margin: 5px 0; white-space: normal;">by {{ song.ArtistName }}</p>
+                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ playlist.PlaylistName }}</h3>
+                            <p style="color: #586069; margin: 5px 0;">Created {{ playlist.Since.strftime('%Y-%m-%d') }}</p>
                         </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p style="color: #586069;">No favorite songs yet.</p>
-                {% endif %}
-            </div>
-        </div>
-    
-        <!-- Playlists Section -->
-        <div style="margin-bottom: 40px;">
-            <h2 style="color: #24292e; margin-bottom: 20px;">Your Playlists</h2>
-            <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
-                {% if playlists %}
-                <div style="display: inline-flex; gap: 15px;">
-                    {% for playlist in playlists %}
-                    <div style="border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; background-color: #f6f8fa; min-width: 200px;">
-                        <h3 style="margin: 0; color: #24292e;">{{ playlist.PlaylistName }}</h3>
-                        <p style="color: #586069; margin: 5px 0;">Created {{ playlist.Since }}</p>
-                        <ul>
-                            {% for song in playlist.Songs %}
-                            <li>{{ song.Title }} by {{ song.ArtistName }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p style="color: #586069;">No playlists created yet.</p>
+                    <p style="color: #586069;">No playlists created yet.</p>
                 {% endif %}
             </div>
         </div>
     
         <!-- Followed Artists Section -->
         <div style="margin-bottom: 40px;">
-            <h2 style="color: #24292e; margin-bottom: 20px;">Artists You Follow</h2>
+            <h2 style="color: #24292e; margin-bottom: 20px;">Followed Artists</h2>
             <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
                 {% if artists %}
                     <div style="display: inline-flex; gap: 15px;">
