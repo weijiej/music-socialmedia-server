@@ -293,8 +293,7 @@ def artist_profile(artist_id):
     ), {"artist_id": artist_id}).fetchall()
 
     return render_template("artist_profile.html", artist=artist, songs=songs)
-
-#search function
+  
 @app.route('/search', methods=["GET", "POST"])
 def search():
     results = None
@@ -304,58 +303,77 @@ def search():
         search_query = request.form.get("search_query")
 
         # Perform a search across artists and users
-        results = {
-            "artists": g.conn.execute(text(
-                "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
-            ), {"query": f"%{search_query}%"}).fetchall(),
+        artists = g.conn.execute(text(
+            "SELECT ArtistName, ArtistID FROM Artists WHERE ArtistName ILIKE :query"
+        ), {"query": f"%{search_query}%"}).fetchall()
 
-            "users": g.conn.execute(text(
-                "SELECT Username FROM Users WHERE Username ILIKE :query"
-            ), {"query": f"%{search_query}%"}).fetchall(),
+        users = g.conn.execute(text(
+            "SELECT Username FROM Users WHERE Username ILIKE :query"
+        ), {"query": f"%{search_query}%"}).fetchall()
+
+        # Convert results to dictionaries
+        results = {
+            "artists": [dict(row) for row in artists],
+            "users": [dict(row) for row in users],
         }
 
     return render_template("search.html", results=results, search_query=search_query)
+
 #seperate route viewing other's profile
 @app.route('/user/<username>', methods=["GET"])
 def user_profile_view(username):
- 
+    # Fetch user information
     user = g.conn.execute(text(
         "SELECT Username FROM Users WHERE Username = :username"
     ), {"username": username}).fetchone()
 
     if not user:
-        return "User not found", 404
+        return render_template("error.html", message=f"User '{username}' not found"), 404
 
     # Fetch playlists created by the user
     playlists = g.conn.execute(text("""
-        SELECT up.playlistid, up.playlistname, up.since
-        FROM user_playlists up
-        WHERE up.username = :username
+        SELECT up.PlaylistID, up.PlaylistName, up.Since, up.Description, up.TotalSongs
+        FROM User_Playlists up
+        WHERE up.Username = :username
     """), {
         'username': username
     }).fetchall()
 
     # Fetch followed artists
     followed_artists = g.conn.execute(text("""
-        SELECT f.artistid, a.artistname, f.since
-        FROM follows f JOIN artists a ON f.artistid = a.artistid
-        WHERE f.username = :username
+        SELECT f.ArtistID, a.ArtistName, f.Since
+        FROM Follows f 
+        JOIN Artists a ON f.ArtistID = a.ArtistID
+        WHERE f.Username = :username
     """), {
         'username': username
     }).fetchall()
 
     # Fetch favorite songs
     favorited_songs = g.conn.execute(text("""
-        SELECT f.songid, s.title, a.artistname
-        FROM favorites f JOIN songs s ON f.songid = s.songid
-        JOIN released_under ru ON s.songid = ru.songid
-        JOIN artists a ON ru.artistid = a.artistid
-        WHERE f.username = :username
+        SELECT f.SongID, s.Title, s.Genre, a.ArtistName, s.Likes
+        FROM Favorites f 
+        JOIN Songs s ON f.SongID = s.SongID
+        JOIN ReleasedUnder ru ON s.SongID = ru.SongID
+        JOIN Artists a ON ru.ArtistID = a.ArtistID
+        WHERE f.Username = :username
     """), {
         'username': username
     }).fetchall()
 
-    return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
+    # Convert results to dictionaries for better template compatibility
+    playlists = [dict(row) for row in playlists]
+    followed_artists = [dict(row) for row in followed_artists]
+    favorited_songs = [dict(row) for row in favorited_songs]
+
+    # Pass data to the template
+    return render_template(
+        'user_profile.html',
+        username=username,
+        playlists=playlists,
+        artists=followed_artists,
+        favorites=favorited_songs
+    )
 
 
 #user profile
