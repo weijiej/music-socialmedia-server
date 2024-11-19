@@ -277,23 +277,23 @@ def add_comment(song_id):
 #artist's profile page
 @app.route('/artist/<artist_id>', methods=["GET"])
 def artist_profile(artist_id):
-    # Fetch artist details by ID
     artist = g.conn.execute(text(
         "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchone()
 
     if not artist:
-        return "Artist not found", 404
+        return render_template("error.html", message="Artist not found"), 404
 
-    # Fetch songs by the artist
+    # Update table name to Released_Under
     songs = g.conn.execute(text(
-        "SELECT S.Title, S.SongID FROM Songs S "
-        "JOIN ReleasedUnder R ON S.SongID = R.SongID "
-        "WHERE R.ArtistID = :artist_id"
+        "SELECT S.Title, S.SongID FROM Songs S JOIN Released_Under R ON S.SongID = R.SongID WHERE R.ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchall()
 
-    return render_template("artist_profile.html", artist=dict(artist), songs=[dict(row) for row in songs])
-  
+    # Convert to list of dictionaries
+    songs = [{"Title": row[0], "SongID": row[1]} for row in songs]
+
+    return render_template("artist_profile.html", artist=artist, songs=songs)
+
 @app.route('/search', methods=["GET", "POST"])
 def search():
     results = None
@@ -323,39 +323,44 @@ def search():
 @app.route('/user/<username>', methods=["GET"])
 def user_profile_view(username):
     user = g.conn.execute(text(
-        "SELECT Username FROM Users WHERE Username = :username"
+        "SELECT Username FROM Users WHERE Username ILIKE :username"
     ), {"username": username}).fetchone()
 
     if not user:
-        return "User not found", 404
+        return render_template("error.html", message="User not found"), 404
 
     playlists = g.conn.execute(text("""
         SELECT up.playlistid, up.playlistname, up.since
         FROM user_playlists up
-        WHERE up.username = :username
-    """), {"username": username}).fetchall()
+        WHERE up.username ILIKE :username
+    """), {
+        'username': username
+    }).fetchall()
 
     followed_artists = g.conn.execute(text("""
         SELECT f.artistid, a.artistname, f.since
         FROM follows f JOIN artists a ON f.artistid = a.artistid
-        WHERE f.username = :username
-    """), {"username": username}).fetchall()
+        WHERE f.username ILIKE :username
+    """), {
+        'username': username
+    }).fetchall()
 
     favorited_songs = g.conn.execute(text("""
         SELECT f.songid, s.title, a.artistname
         FROM favorites f JOIN songs s ON f.songid = s.songid
         JOIN released_under ru ON s.songid = ru.songid
         JOIN artists a ON ru.artistid = a.artistid
-        WHERE f.username = :username
-    """), {"username": username}).fetchall()
+        WHERE f.username ILIKE :username
+    """), {
+        'username': username
+    }).fetchall()
 
-    return render_template(
-        'user_profile.html', 
-        username=username, 
-        playlists=[dict(row) for row in playlists], 
-        artists=[dict(row) for row in followed_artists], 
-        favorites=[dict(row) for row in favorited_songs]
-    )
+    # Use tuple unpacking to manually construct dictionaries
+    playlists = [{"PlaylistID": row[0], "PlaylistName": row[1], "Since": row[2]} for row in playlists]
+    followed_artists = [{"ArtistID": row[0], "ArtistName": row[1], "Since": row[2]} for row in followed_artists]
+    favorited_songs = [{"SongID": row[0], "Title": row[1], "ArtistName": row[2]} for row in favorited_songs]
+
+    return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
 
 
 
