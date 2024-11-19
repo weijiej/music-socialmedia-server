@@ -143,8 +143,8 @@
             <ul>
                 {% for song in songs %}
                 <li>
-                    <form action="{{ url_for('add_to_playlist', song_id=song['SongID']) }}" method="POST" style="display: inline;">
-                        <button type="submit" style="border: none; background: none; color: #0366d6; text-decoration: underline; cursor: pointer;">
+                    <form action="{{ url_for('add_to_playlist', song_title=song['Title']) }}" method="POST" style="display: inline;">
+                        <button type="submit" style="background: none; border: none; color: #0366d6; text-decoration: underline; cursor: pointer;">
                             {{ song["Title"] }}
                         </button>
                     </form>
@@ -155,6 +155,7 @@
             <p>No songs available for this artist.</p>
             {% endif %}
         </section>
+
 
         <!-- Follow Artist Button -->
         <form action="{{ url_for('follow_artist') }}" method="POST">
