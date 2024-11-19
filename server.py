@@ -493,6 +493,7 @@ def follow_artist():
 
 #add playlist function
 @app.route('/add_to_playlist/<string:song_title>', methods=["POST"])
+@app.route('/add_to_playlist/<string:song_title>', methods=["POST"])
 def add_to_playlist(song_title):
     if 'username' not in session:
         flash("You must be logged in to add songs to your playlist.", "danger")
@@ -501,27 +502,18 @@ def add_to_playlist(song_title):
     username = session['username']
 
     try:
-        # Check if the user has a default playlist
+        # Fetch the default playlist for the user
         playlist = g.conn.execute(text("""
-            SELECT playlistid FROM user_playlists WHERE username = :username
-        """), {"username": username}).fetchone()
+            SELECT playlistid FROM user_playlists 
+            WHERE username = :username AND playlistname = 'My Playlist'
+        """), {'username': username}).fetchone()
 
         if not playlist:
-            # If no default playlist exists, create one dynamically
-            playlist_id = f"PL-{username[:2].upper()}{str(uuid.uuid4().hex)[:5].upper()}"
-            g.conn.execute(text("""
-                INSERT INTO user_playlists (playlistid, playlistname, description, username, since)
-                VALUES (:playlistid, :playlistname, :description, :username, CURRENT_DATE)
-            """), {
-                "playlistid": playlist_id,
-                "playlistname": "My Playlist",
-                "description": "Default playlist",
-                "username": username
-            })
-            g.conn.commit()
-        else:
-            # Use the existing playlist
-            playlist_id = playlist[0]
+            # Default playlist not found; handle this edge case explicitly
+            flash("Default playlist not found. Please contact support.", "danger")
+            return redirect(request.referrer)
+
+        playlist_id = playlist[0]  # Get the existing playlist ID
 
         # Fetch the song ID using the song title
         song = g.conn.execute(text("""
@@ -545,7 +537,7 @@ def add_to_playlist(song_title):
         if existing_entry:
             flash(f"'{song_title}' is already in your playlist.", "info")
         else:
-            # Add the song to the user's playlist
+            # Add the song to the existing playlist
             g.conn.execute(text("""
                 INSERT INTO playlist_songs (playlistid, songid) VALUES (:playlist_id, :song_id)
             """), {
