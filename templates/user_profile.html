@@ -119,6 +119,20 @@
                                     background-color: #f6f8fa;
                                     min-width: 200px;">
                             <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ artist.ArtistName }}</h3>
+                             <!-- Button to unfavorite a song -->
+                            <form action="{{ url_for('remove_followed') }}" method="POST" style="margin-top: 10px;">
+                                <input type="hidden" name="artist_id" value="{{ artist.ArtistID }}">
+                                <button type="submit" 
+                                    style="background-color: #dc3545;
+                                           color: white;
+                                           border: none;
+                                           padding: 4px 8px;
+                                           border-radius: 4px;
+                                           cursor: pointer;
+                                           font-size: 12px;">
+                                    Remove
+                                </button>
+                            </form>
                         </div>
                         {% endfor %}
                     </div>
