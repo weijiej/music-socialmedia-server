@@ -69,7 +69,7 @@ Artists: {{ artists | safe }}
                                     border-radius: 8px;
                                     background-color: #f6f8fa;
                                     min-width: 200px;">
-                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ playlist.playlistname }}</h3>
+                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ playlist.Playlistname }}</h3>
                             <p style="color: #586069; margin: 5px 0; white-space: normal;">
                                 Created {{ playlist.datecreated.strftime('%Y-%m-%d') }}
                             </p>
@@ -94,7 +94,7 @@ Artists: {{ artists | safe }}
                                     border-radius: 8px;
                                     background-color: #f6f8fa;
                                     min-width: 200px;">
-                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ artist.artistname }}</h3>
+                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ artist.Artistname }}</h3>
                         </div>
                         {% endfor %}
                     </div>
