@@ -480,6 +480,69 @@ def follow_artist():
     # Stay on the same artist profile page
     return redirect(request.referrer)
 
+#add playlist function
+@app.route('/add_to_playlist', methods=["POST"])
+def add_to_playlist():
+    if 'username' not in session:
+        flash("You must be logged in to add songs to your playlist.", "danger")
+        return redirect('/login')
+
+    song_id = request.form.get('song_id')
+    username = session['username']
+
+    try:
+        # Check if the song already exists in the user's playlist
+        existing_song = g.conn.execute(text("""
+            SELECT * FROM contains WHERE playlistid = (
+                SELECT playlistid FROM user_playlists WHERE username = :username
+            ) AND songid = :song_id
+        """), {
+            "username": username,
+            "song_id": song_id
+        }).fetchone()
+
+        if not existing_song:
+            # Add the song to the user's playlist
+            playlist_id = g.conn.execute(text("""
+                SELECT playlistid FROM user_playlists WHERE username = :username LIMIT 1
+            """), {
+                "username": username
+            }).fetchone()
+
+            # If the user has no playlist, create one
+            if not playlist_id:
+                new_playlist_id = f"PL{username[:5].upper()}{len(username)}"
+                g.conn.execute(text("""
+                    INSERT INTO user_playlists (playlistid, playlistname, username)
+                    VALUES (:playlist_id, 'My Playlist', :username)
+                """), {
+                    "playlist_id": new_playlist_id,
+                    "username": username
+                })
+                playlist_id = new_playlist_id
+            else:
+                playlist_id = playlist_id[0]
+
+            # Insert song into the playlist
+            g.conn.execute(text("""
+                INSERT INTO contains (playlistid, songid)
+                VALUES (:playlist_id, :song_id)
+            """), {
+                "playlist_id": playlist_id,
+                "song_id": song_id
+            })
+            g.conn.commit()
+
+            flash("Song added to your playlist!", "success")
+        else:
+            flash("Song is already in your playlist.", "info")
+
+    except Exception as e:
+        print(f"Error adding to playlist: {e}")
+        flash("An error occurred. Please try again.", "danger")
+
+    return redirect(request.referrer)
+
 
 if __name__ == "__main__":
   import click
