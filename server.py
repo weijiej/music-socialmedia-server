@@ -508,7 +508,7 @@ def add_to_playlist(song_title):
 
         if not playlist:
             # If no default playlist exists, create one dynamically
-            playlist_id = f"PL-{username[:4]}{str(uuid.uuid4())[:2]}"
+            playlist_id = f"PL-{username[:2].upper()}{str(uuid.uuid4().hex)[:5].upper()}"
             g.conn.execute(text("""
                 INSERT INTO user_playlists (playlistid, playlistname, description, username, since)
                 VALUES (:playlistid, :playlistname, :description, :username, CURRENT_DATE)
