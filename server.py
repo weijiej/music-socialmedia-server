@@ -337,12 +337,12 @@ def user_profile_view(username):
         return render_template("error.html", message="User not found"), 404
 
     playlists = g.conn.execute(text("""
-        SELECT up.playlistid, up.playlistname, up.since
-        FROM user_playlists up
-        WHERE up.username ILIKE :username
-    """), {
-        'username': username
-    }).fetchall()
+       SELECT up.playlistid, up.playlistname, up.since
+       FROM user_playlists up
+       WHERE LOWER(up.username) = LOWER(:username)
+    """), {'username': username}).fetchall()
+    playlists = [{"PlaylistID": row[0], "PlaylistName": row[1], "Since": row[2]} for row in playlists]
+
 
     followed_artists = g.conn.execute(text("""
         SELECT f.artistid, a.artistname, f.since
@@ -351,6 +351,7 @@ def user_profile_view(username):
     """), {
         'username': username
     }).fetchall()
+    followed_artists = [{"ArtistID": row[0], "ArtistName": row[1], "Since": row[2]} for row in followed_artists]
 
     favorited_songs = g.conn.execute(text("""
         SELECT f.songid, s.title, a.artistname
@@ -361,13 +362,15 @@ def user_profile_view(username):
     """), {
         'username': username
     }).fetchall()
-
-    playlists = [{"PlaylistID": row[0], "PlaylistName": row[1], "Since": row[2]} for row in playlists]
-    followed_artists = [{"ArtistID": row[0], "ArtistName": row[1], "Since": row[2]} for row in followed_artists]
     favorited_songs = [{"SongID": row[0], "Title": row[1], "ArtistName": row[2]} for row in favorited_songs]
 
-    return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
-
+     return render_template(
+        'user_profile.html',
+        username=username,
+        playlists=playlists,
+        artists=followed_artists,
+        favorites=favorited_songs
+    )
 
 #user profile
 @app.route('/profile')
