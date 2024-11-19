@@ -439,6 +439,50 @@ def user_profile():
         return redirect('/dashboard')
 
 @app.route('/remove_favorite', methods=['POST'])
+@app.route('/remove_favorite', methods=['POST'])
+def remove_favorite():
+    if 'username' not in session:
+        return redirect('/login')
+    
+    song_id = request.form.get('song_id')
+    username = session['username']
+
+    try:
+        # Get song title for the flash message
+        song = g.conn.execute(text("""
+            SELECT s.title 
+            FROM songs s 
+            WHERE s.songid = :songid
+        """), {
+            "songid": song_id
+        }).fetchone()
+
+        if song:
+            song_title = song[0]
+            
+            # Remove from favorites
+            g.conn.execute(text("""
+                DELETE FROM favorites
+                WHERE username = :username AND songid = :songid
+            """), {
+                "username": username,
+                "songid": song_id
+            })
+            g.conn.commit()
+            
+            # Flash Message
+            flash(f"'{song_title}' has been removed from your favorites.", "success")
+        else:
+            flash("Song not found.", "info")
+            
+    except Exception as e:
+        print(f"Error removing favorite: {e}")
+        flash("Error removing song from favorites. Please try again.", "info")
+
+    # Refreshes user page
+    return redirect(url_for('user_profile'))
+
+
 #follow artist function 
 @app.route('/follow_artist', methods=['POST'])
 def follow_artist():
