@@ -374,58 +374,58 @@ def user_profile():
     username = session['username']
 
     try:
-        #get the users playlists
+        # Get the user's playlists
         playlists = g.conn.execute(text("""
-            SELECT up.playlistid, up.playlistname, up.since
+            SELECT up.PlaylistID, up.PlaylistName, up.Since
             FROM user_playlists up
-            WHERE up.username = :username
+            WHERE up.Username = :username
         """), {
             'username': username
         }).fetchall()
         
-        #get the followed artists
+        # Get the followed artists
         followed_artists = g.conn.execute(text("""
-            SELECT f.artistid, a.artistname, f.since
-            FROM follows f JOIN artists a ON f.artistid = a.artistid
-            WHERE f.username = :username
+            SELECT f.ArtistID, a.ArtistName, f.Since
+            FROM follows f JOIN artists a ON f.ArtistID = a.ArtistID
+            WHERE f.Username = :username
         """), {
             'username': username
         }).fetchall()
 
-        #get the user's favorite songs
+        # Get the user's favorite songs
         favorited_songs = g.conn.execute(text("""
-            SELECT f.songid, s.title, a.artistname
-            FROM favorites f JOIN songs s ON f.songid = s.songid
-            JOIN released_under ru ON s.songid = ru.songid
-            JOIN artists a ON ru.artistid = a.artistid
-            WHERE f.username = :username 
+            SELECT f.SongID, s.Title, a.ArtistName
+            FROM favorites f JOIN songs s ON f.SongID = s.SongID
+            JOIN released_under ru ON s.SongID = ru.SongID
+            JOIN artists a ON ru.ArtistID = a.ArtistID
+            WHERE f.Username = :username 
         """), {
             'username': username
         }).fetchall()
 
-        #turn queries into lists
+        # Turn queries into lists
         playlists_list = []
         for playlist in playlists:
             playlists_list.append({
-                'playlistid': playlist[0],
-                'playlistname': playlist[1],
-                'since': playlist[2]
+                'PlaylistID': playlist[0],
+                'PlaylistName': playlist[1],
+                'Since': playlist[2]
             })
 
         artists_list = []
         for artist in followed_artists:
             artists_list.append({
-                'artistid': artist[0],
-                'artistname': artist[1],
-                'since': artist[2]
+                'ArtistID': artist[0],
+                'ArtistName': artist[1],
+                'Since': artist[2]
             })
 
         favorites_list = []
         for song in favorited_songs:
             favorites_list.append({
-                'songid': song[0],
-                'title': song[1],
-                'artistname': song[2]
+                'SongID': song[0],
+                'Title': song[1],
+                'ArtistName': song[2]
             })
             
         return render_template('user_profile.html', username=username, playlists=playlists_list, artists=artists_list, favorites=favorites_list)
