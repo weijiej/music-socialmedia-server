@@ -40,18 +40,14 @@
             <h2 style="color: #24292e; margin-bottom: 20px;">Your Playlists</h2>
             <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
                 {% if playlists %}
-                    <div style="display: inline-flex; gap: 15px;">
+                    <div>
                         {% for playlist in playlists %}
-                        <div style="border: 1px solid #e1e4e8; 
-                                    padding: 15px; 
-                                    border-radius: 8px;
-                                    background-color: #f6f8fa;
-                                    min-width: 200px;">
-                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ playlist.Title }}</h3>
-                            <p style="color: #586069; margin: 5px 0; white-space: normal;">
-                                Created {{ playlist.datecreated.strftime('%Y-%m-%d') }}
-                            </p>
-                        </div>
+                          <h3 style="margin-bottom: 10px;">{{ playlist.PlaylistName }}</h3>
+                          <ul>
+                            {% for song in playlist.Songs %}
+                            <li>{{ song.Title }} by {{ song.ArtistName }}</li>
+                            {% endfor %}
+                        </ul>
                         {% endfor %}
                     </div>
                 {% else %}
