@@ -415,7 +415,7 @@ def user_profile():
                 WHERE ps.PlaylistID = :playlist_id
             """), {'playlist_id': playlist[0]}).fetchall()
             
-          playlists_list.append({
+           playlists_list.append({
                 'PlaylistID': playlist[0],
                 'PlaylistName': playlist[1],
                 'Since': playlist[2],
