@@ -283,11 +283,19 @@ def artist_profile(artist_id):
 
     if not artist:
         return render_template("error.html", message="Artist not found"), 404
-
-    # Update table name to Released_Under
+      
+    print(f"Fetched artist: {artist}")
+  
     songs = g.conn.execute(text(
         "SELECT S.Title, S.SongID FROM Songs S JOIN Released_Under R ON S.SongID = R.SongID WHERE R.ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchall()
+
+   artist_dict = {
+        "ArtistName": artist[0],
+        "ArtistBio": artist[1],
+        "Country": artist[2]
+    }
+    print(f"Artist passed to template: {artist_dict}")
 
     # Convert to list of dictionaries
     songs = [{"Title": row[0], "SongID": row[1]} for row in songs]
@@ -361,7 +369,6 @@ def user_profile_view(username):
     favorited_songs = [{"SongID": row[0], "Title": row[1], "ArtistName": row[2]} for row in favorited_songs]
 
     return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
-
 
 
 #user profile
