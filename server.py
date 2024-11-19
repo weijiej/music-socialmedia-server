@@ -336,22 +336,18 @@ def user_profile_view(username):
     if not user:
         return render_template("error.html", message="User not found"), 404
 
+    # Fetch data from the database
     playlists = g.conn.execute(text("""
-       SELECT up.playlistid, up.playlistname, up.since
-       FROM user_playlists up
-       WHERE LOWER(up.username) = LOWER(:username)
+        SELECT up.playlistid, up.playlistname, up.since
+        FROM user_playlists up
+        WHERE up.username ILIKE :username
     """), {'username': username}).fetchall()
-    playlists = [{"PlaylistID": row[0], "PlaylistName": row[1], "Since": row[2]} for row in playlists]
-
 
     followed_artists = g.conn.execute(text("""
         SELECT f.artistid, a.artistname, f.since
         FROM follows f JOIN artists a ON f.artistid = a.artistid
         WHERE f.username ILIKE :username
-    """), {
-        'username': username
-    }).fetchall()
-    followed_artists = [{"ArtistID": row[0], "ArtistName": row[1], "Since": row[2]} for row in followed_artists]
+    """), {'username': username}).fetchall()
 
     favorited_songs = g.conn.execute(text("""
         SELECT f.songid, s.title, a.artistname
@@ -359,18 +355,20 @@ def user_profile_view(username):
         JOIN released_under ru ON s.songid = ru.songid
         JOIN artists a ON ru.artistid = a.artistid
         WHERE f.username ILIKE :username
-    """), {
-        'username': username
-    }).fetchall()
+    """), {'username': username}).fetchall()
+
+    # Convert to dictionaries
+    playlists = [{"PlaylistID": row[0], "PlaylistName": row[1], "Since": row[2]} for row in playlists]
+    followed_artists = [{"ArtistID": row[0], "ArtistName": row[1], "Since": row[2]} for row in followed_artists]
     favorited_songs = [{"SongID": row[0], "Title": row[1], "ArtistName": row[2]} for row in favorited_songs]
-  
-    return render_template(
-        'user_profile.html',
-        username=username,
-        playlists=playlists,
-        artists=followed_artists,
-        favorites=favorited_songs
-    )
+
+    # Debug prints
+    print("Playlists:", playlists)
+    print("Followed Artists:", followed_artists)
+    print("Favorite Songs:", favorited_songs)
+
+    return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
+
 
 #user profile
 @app.route('/profile')
