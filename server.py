@@ -1,5 +1,4 @@
 import os
-import uuid
 import spotipy
   # accessible as a variable in index.html:
 from sqlalchemy import *
@@ -287,18 +286,22 @@ def artist_profile(artist_id):
         return f"<h1>Artist not found</h1><p>The artist with ID {artist_id} does not exist.</p><a href='/search'>Back to Search</a>", 404
 
     artist_dict = {
-        "ArtistName": artist[0],  # Ensure the name is fetched correctly
+        "ArtistName": artist[0],
         "ArtistBio": artist[1],
         "Country": artist[2]
     }
 
-    # Fetch songs released by the artist
-    songs = g.conn.execute(text(
-        "SELECT S.Title, S.SongID FROM Songs S JOIN Released_Under R ON S.SongID = R.SongID WHERE R.ArtistID = :artist_id"
-    ), {"artist_id": artist_id}).fetchall()
+    #get the songs created by the artist
+    songs = g.conn.execute(text("""
+        SELECT s.songid, s.title
+        FROM songs s JOIN released_under ru ON s.songid = ru.songid
+        WHERE ru.artistid = :artistid
+    """),{
+        "artistid": artist_id
+    }).fetchall()
 
     # Convert songs to a list of dictionaries
-    songs_list = [{"Title": row[0], "SongID": row[1]} for row in songs]
+    songs_list = [{"song_id": row[0], "title": row[1]} for row in songs]
 
     return render_template("artist_profile.html", artist=artist_dict, songs=songs_list)
 
@@ -341,7 +344,7 @@ def user_profile_view(username):
     playlists = g.conn.execute(text("""
         SELECT up.playlistid, up.playlistname, up.since
         FROM user_playlists up
-        WHERE up.username ILIKE :username
+        WHERE up.username ILIKE :username AND up.publicstatus = true
     """), {'username': username}).fetchall()
 
     followed_artists = g.conn.execute(text("""
@@ -365,7 +368,6 @@ def user_profile_view(username):
 
     return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
 
-
 #user profile
 @app.route('/profile')
 def user_profile():
@@ -377,7 +379,7 @@ def user_profile():
     try:
         # Get the user's playlists
         playlists = g.conn.execute(text("""
-            SELECT up.PlaylistID, up.PlaylistName, up.Since
+            SELECT up.playlistid, up.playlistname, up.since
             FROM user_playlists up
             WHERE up.Username = :username
         """), {
@@ -386,7 +388,7 @@ def user_profile():
         
         # Get the followed artists
         followed_artists = g.conn.execute(text("""
-            SELECT f.ArtistID, a.ArtistName, f.Since
+            SELECT f.artistID, a.artistName, f.since
             FROM follows f JOIN artists a ON f.ArtistID = a.ArtistID
             WHERE f.Username = :username
         """), {
@@ -399,7 +401,7 @@ def user_profile():
             FROM favorites f JOIN songs s ON f.SongID = s.SongID
             JOIN released_under ru ON s.SongID = ru.SongID
             JOIN artists a ON ru.ArtistID = a.ArtistID
-            WHERE f.Username = :username 
+            WHERE f.Username = :username
         """), {
             'username': username
         }).fetchall()
@@ -407,20 +409,10 @@ def user_profile():
         # Turn queries into lists
         playlists_list = []
         for playlist in playlists:
-           songs = g.conn.execute(text("""
-                SELECT s.Title, a.ArtistName
-                FROM playlist_songs ps
-                JOIN songs s ON ps.SongID = s.SongID
-                JOIN released_under ru ON s.SongID = ru.SongID
-                JOIN artists a ON ru.ArtistID = a.ArtistID
-                WHERE ps.PlaylistID = :playlist_id
-            """), {'playlist_id': playlist[0]}).fetchall()
-            
-           playlists_list.append({
+            playlists_list.append({
                 'PlaylistID': playlist[0],
                 'PlaylistName': playlist[1],
-                'Since': playlist[2],
-                'Songs': [{'Title': song[0], 'ArtistName': song[1]} for song in songs]
+                'Since': playlist[2]
             })
 
         artists_list = []
@@ -446,6 +438,7 @@ def user_profile():
         flash("Error loading profile information", "info")
         return redirect('/dashboard')
 
+@app.route('/remove_favorite', methods=['POST'])
 #follow artist function 
 @app.route('/follow_artist', methods=['POST'])
 def follow_artist():
@@ -499,58 +492,35 @@ def add_to_playlist(song_title):
         return redirect('/login')
 
     username = session['username']
-
+    
     try:
-        # Fetch the default playlist for the user
-        playlist = g.conn.execute(text("""
-            SELECT playlistid FROM user_playlists 
-            WHERE username = :username AND playlistname = 'My Playlist'
-        """), {'username': username}).fetchone()
-
-        if not playlist:
-            # Default playlist not found, create it
-            default_playlist_id = f"PL-{username[:5]}-{str(uuid.uuid4())[:5]}"
-            g.conn.execute(text("""
-                INSERT INTO user_playlists (playlistid, playlistname, description, username, since)
-                VALUES (:playlistid, :playlistname, :description, :username, CURRENT_DATE)
-            """), {
-                'playlistid': default_playlist_id,
-                'playlistname': 'My Playlist',
-                'description': 'Default playlist',
-                'username': username
-            })
-            g.conn.commit()
-            playlist_id = default_playlist_id
-        else:
-            playlist_id = playlist[0]  # Get the existing playlist ID
-
         # Fetch the song ID using the song title
         song = g.conn.execute(text("""
             SELECT songid FROM songs WHERE title = :title
         """), {"title": song_title}).fetchone()
-
+        
         if not song:
             flash("Song not found.", "danger")
             return redirect(request.referrer)
 
         song_id = song[0]
 
-        # Check if the song is already in the playlist
+        # Check if the song is already in the user's playlist
         existing_entry = g.conn.execute(text("""
-            SELECT * FROM playlist_songs WHERE playlistid = :playlist_id AND songid = :song_id
+            SELECT * FROM favorites WHERE username = :username AND songid = :song_id
         """), {
-            "playlist_id": playlist_id,
+            "username": username,
             "song_id": song_id
         }).fetchone()
 
         if existing_entry:
             flash(f"'{song_title}' is already in your playlist.", "info")
         else:
-            # Add the song to the existing playlist
+            # Add the song to the user's playlist
             g.conn.execute(text("""
-                INSERT INTO playlist_songs (playlistid, songid) VALUES (:playlist_id, :song_id)
+                INSERT INTO favorites (username, songid) VALUES (:username, :song_id)
             """), {
-                "playlist_id": playlist_id,
+                "username": username,
                 "song_id": song_id
             })
             g.conn.commit()
@@ -561,6 +531,63 @@ def add_to_playlist(song_title):
     
     return redirect(request.referrer)
 
+@app.route('/create_playlist', methods=['GET', 'POST'])
+def create_playlist():
+    if 'username' not in session:
+        return redirect('/login')
+
+    if request.method == 'GET':
+        return render_template('create_playlist.html')
+
+    #user inputs
+    description = request.form.get('description', '')        
+    playlist_name = request.form.get('playlist_name')
+    public_status = request.form.get('is_public') == 'true'
+    username = session['username']
+
+    try:
+        #query the database
+
+        #get last playlist id
+        last_playlist = g.conn.execute(text("""
+            SELECT playlistid
+            FROM user_playlists
+            ORDER BY playlistid DESC
+            LIMIT 1
+        """)).fetchone()
+
+        if last_playlist: #playlists already exist
+            #extract the id and increment it for the next one
+            last_id = int(last_playlist[0][3:])
+            new_num = last_id + 1
+        else: #no playlists exist
+            new_num = 1
+        
+        #correct formatting
+        new_playlist_id = f"PLS{new_num:07d}"
+
+        #insert newly created playlist into database
+        g.conn.execute(text("""
+            INSERT INTO user_playlists
+            (playlistid, playlistname, description, publicstatus, totalsongs, username, since)
+            VALUES
+            (:playlistid, :playlistname, :description, :publicstatus, 0, :username, CURRENT_TIMESTAMP)
+        """), {
+            'playlistid': new_playlist_id,
+            'playlistname': playlist_name,
+            'description': description,
+            'publicstatus': public_status,
+            'username': username
+        })
+
+        g.conn.commit()
+        flash(f"Playlist '{playlist_name}' created successfully!", "success")
+        return redirect(url_for('user_profile'))
+    
+    except Exception as e:
+        print(f"Error creating playlist: {e}")
+        flash("Error creating playlist. Please try again.", "info")
+        return redirect(url_for('create_playlist'))
 
 if __name__ == "__main__":
   import click
