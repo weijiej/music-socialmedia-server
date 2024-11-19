@@ -8,20 +8,14 @@
 <body>
     <h1>Search Results</h1>
 
-     <!-- Back to Dashboard Button -->
-    <div style="margin-bottom: 20px;">
-        <a href="{{ url_for('dashboard') }}" 
-           style="padding: 10px 20px; 
-                  background-color: lightblue; 
-                  color: black; 
-                  border: 1px solid black; 
-                  border-radius: 4px; 
-                  text-decoration: none; 
-                  font-size: 16px;">
-            Back to Dashboard
-        </a>
-    </div>
-
+     <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+        <div style="margin-bottom: 20px;">
+            <a href="{{ url_for('dashboard') }}" 
+               style="text-decoration: none; color: #0366d6;">
+                ← Back to Dashboard
+            </a>
+        </div>
+         
     <!-- Search Form -->
     <form method="POST" action="/search">
         <input type="text" name="search_query" placeholder="Search for artists or users" required>
