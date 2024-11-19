@@ -362,11 +362,6 @@ def user_profile_view(username):
     followed_artists = [{"ArtistID": row[0], "ArtistName": row[1], "Since": row[2]} for row in followed_artists]
     favorited_songs = [{"SongID": row[0], "Title": row[1], "ArtistName": row[2]} for row in favorited_songs]
 
-    # Debug prints
-    print("Playlists:", playlists)
-    print("Followed Artists:", followed_artists)
-    print("Favorite Songs:", favorited_songs)
-
     return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
 
 
