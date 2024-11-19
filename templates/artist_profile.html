@@ -74,7 +74,7 @@
     
     <!-- Follow Artist Button -->
     <form action="{{ url_for('follow_artist') }}" method="POST">
-        <input type="hidden" name="artist_id" value="{{ artist['ArtistID'] }}">
+        <input type="hidden" name="artist_name" value="{{ artist['ArtistName'] }}">
         <button type="submit" 
                 style="padding: 10px 20px; 
                        background-color: green; 
