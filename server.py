@@ -363,8 +363,8 @@ def user_profile_view(username):
         'username': username
     }).fetchall()
     favorited_songs = [{"SongID": row[0], "Title": row[1], "ArtistName": row[2]} for row in favorited_songs]
-
-     return render_template(
+  
+    return render_template(
         'user_profile.html',
         username=username,
         playlists=playlists,
