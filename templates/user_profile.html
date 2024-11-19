@@ -11,6 +11,19 @@
         <div style="text-align: center; margin-bottom: 40px;">
             <h1>{{ username }}'s Profile</h1>
         </div>
+         <!-- Back to Dashboard Button -->
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('dashboard') }}" 
+           style="padding: 10px 20px; 
+                  background-color: lightblue; 
+                  color: black; 
+                  border: 1px solid black; 
+                  border-radius: 4px; 
+                  text-decoration: none; 
+                  font-size: 16px;">
+            Back to Dashboard
+        </a>
+    </div>
     
         <!-- Favorite Songs Section -->
         <div style="margin-bottom: 40px;">
