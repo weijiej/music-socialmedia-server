@@ -275,7 +275,7 @@ def add_comment(song_id):
     return redirect(url_for('view_comments', song_id=song_id))
   
 #artist's profile page
-@app.route('/artist/<int:artist_id>', methods=["GET"])
+@app.route('/artist/<artist_id>', methods=["GET"])
 def artist_profile(artist_id):
     # Fetch artist details by ID
     artist = g.conn.execute(text(
@@ -292,7 +292,7 @@ def artist_profile(artist_id):
         "WHERE R.ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchall()
 
-    return render_template("artist_profile.html", artist=artist, songs=songs)
+    return render_template("artist_profile.html", artist=dict(artist), songs=[dict(row) for row in songs])
   
 @app.route('/search', methods=["GET", "POST"])
 def search():
@@ -313,8 +313,8 @@ def search():
 
         # Convert results to dictionaries
         results = {
-            "artists": [row._asdict() for row in artists],
-            "users": [row._asdict() for row in users],
+            "artists": [{"ArtistName": row["ArtistName"], "ArtistID": row["ArtistID"]} for row in artists],
+            "users": [{"Username": row["Username"]} for row in users],
         }
 
     return render_template("search.html", results=results, search_query=search_query)
@@ -322,58 +322,41 @@ def search():
 #seperate route viewing other's profile
 @app.route('/user/<username>', methods=["GET"])
 def user_profile_view(username):
-    # Fetch user information
     user = g.conn.execute(text(
         "SELECT Username FROM Users WHERE Username = :username"
     ), {"username": username}).fetchone()
 
     if not user:
-        return render_template("error.html", message=f"User '{username}' not found"), 404
+        return "User not found", 404
 
-    # Fetch playlists created by the user
     playlists = g.conn.execute(text("""
-        SELECT up.PlaylistID, up.PlaylistName, up.Since, up.Description, up.TotalSongs
-        FROM User_Playlists up
-        WHERE up.Username = :username
-    """), {
-        'username': username
-    }).fetchall()
+        SELECT up.playlistid, up.playlistname, up.since
+        FROM user_playlists up
+        WHERE up.username = :username
+    """), {"username": username}).fetchall()
 
-    # Fetch followed artists
     followed_artists = g.conn.execute(text("""
-        SELECT f.ArtistID, a.ArtistName, f.Since
-        FROM Follows f 
-        JOIN Artists a ON f.ArtistID = a.ArtistID
-        WHERE f.Username = :username
-    """), {
-        'username': username
-    }).fetchall()
+        SELECT f.artistid, a.artistname, f.since
+        FROM follows f JOIN artists a ON f.artistid = a.artistid
+        WHERE f.username = :username
+    """), {"username": username}).fetchall()
 
-    # Fetch favorite songs
     favorited_songs = g.conn.execute(text("""
-        SELECT f.SongID, s.Title, s.Genre, a.ArtistName, s.Likes
-        FROM Favorites f 
-        JOIN Songs s ON f.SongID = s.SongID
-        JOIN ReleasedUnder ru ON s.SongID = ru.SongID
-        JOIN Artists a ON ru.ArtistID = a.ArtistID
-        WHERE f.Username = :username
-    """), {
-        'username': username
-    }).fetchall()
+        SELECT f.songid, s.title, a.artistname
+        FROM favorites f JOIN songs s ON f.songid = s.songid
+        JOIN released_under ru ON s.songid = ru.songid
+        JOIN artists a ON ru.artistid = a.artistid
+        WHERE f.username = :username
+    """), {"username": username}).fetchall()
 
-    # Convert results to dictionaries for better template compatibility
-    playlists = [dict(row) for row in playlists]
-    followed_artists = [dict(row) for row in followed_artists]
-    favorited_songs = [dict(row) for row in favorited_songs]
-
-    # Pass data to the template
     return render_template(
-        'user_profile.html',
-        username=username,
-        playlists=playlists,
-        artists=followed_artists,
-        favorites=favorited_songs
+        'user_profile.html', 
+        username=username, 
+        playlists=[dict(row) for row in playlists], 
+        artists=[dict(row) for row in followed_artists], 
+        favorites=[dict(row) for row in favorited_songs]
     )
+
 
 
 #user profile
