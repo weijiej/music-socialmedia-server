@@ -57,14 +57,21 @@
             margin-bottom: 10px;
         }
 
-        li a {
-            color: #0366d6;
-            text-decoration: none;
-            cursor: pointer;
+        li form {
+            display: inline;
         }
 
-        li a:hover {
+        li form button {
+            background: none;
+            border: none;
+            color: #0366d6;
             text-decoration: underline;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        li form button:hover {
+            text-decoration: none;
         }
 
         form button {
@@ -143,10 +150,8 @@
             <ul>
                 {% for song in songs %}
                 <li>
-                    <form action="{{ url_for('add_to_playlist', song_title=song['Title']) }}" method="POST" style="display: inline;">
-                        <button type="submit" style="background: none; border: none; color: #0366d6; text-decoration: underline; cursor: pointer;">
-                            {{ song["Title"] }}
-                        </button>
+                    <form action="{{ url_for('add_to_playlist', song_id=song['SongID']) }}" method="POST">
+                        <button type="submit">{{ song["Title"] }}</button>
                     </form>
                 </li>
                 {% endfor %}
@@ -155,7 +160,6 @@
             <p>No songs available for this artist.</p>
             {% endif %}
         </section>
-
 
         <!-- Follow Artist Button -->
         <form action="{{ url_for('follow_artist') }}" method="POST">
