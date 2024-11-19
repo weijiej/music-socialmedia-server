@@ -27,13 +27,15 @@
             font-size: 24px;
             color: #0366d6;
             text-align: center;
+            margin-bottom: 20px;
         }
 
         a.back-link {
             text-decoration: none;
             color: #0366d6;
-            display: inline-block;
+            font-size: 16px;
             margin-bottom: 20px;
+            display: inline-block;
         }
 
         form {
@@ -79,19 +81,14 @@
             margin-bottom: 10px;
         }
 
-        li form button {
+        li a {
+            text-decoration: none;
             font-size: 16px;
-            padding: 8px 16px;
-            background-color: #28a745;
-            border: none;
-            border-radius: 4px;
-            color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            color: #0366d6;
         }
 
-        li form button:hover {
-            background-color: #218838;
+        li a:hover {
+            text-decoration: underline;
         }
 
         .message {
@@ -122,9 +119,9 @@
         <ul>
             {% for artist in results.artists %}
             <li>
-                <form method="GET" action="{{ url_for('artist_profile', artist_id=artist['ArtistID']) }}">
-                    <button type="submit">{{ artist['ArtistName'] }}'s Profile</button>
-                </form>
+                <a href="{{ url_for('artist_profile', artist_id=artist['ArtistID']) }}">
+                    {{ artist['ArtistName'] }}'s Profile
+                </a>
             </li>
             {% endfor %}
         </ul>
@@ -138,9 +135,9 @@
         <ul>
             {% for user in results.users %}
             <li>
-                <form method="GET" action="{{ url_for('user_profile_view', username=user['Username']) }}">
-                    <button type="submit">{{ user['Username'] }}'s Profile</button>
-                </form>
+                <a href="{{ url_for('user_profile_view', username=user['Username']) }}">
+                    {{ user['Username'] }}'s Profile
+                </a>
             </li>
             {% endfor %}
         </ul>
