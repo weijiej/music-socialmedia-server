@@ -126,18 +126,25 @@
         </section>
 
         <!-- Songs by the Artist -->
-        <section>
-            <h2>Songs</h2>
-            {% if songs %}
-            <ul>
-                {% for song in songs %}
-                <li>{{ song["Title"] }}</li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p>No songs available for this artist.</p>
-            {% endif %}
-        </section>
+<section>
+    <h2>Songs</h2>
+    {% if songs %}
+    <ul>
+        {% for song in songs %}
+        <li>
+            <form action="{{ url_for('add_to_playlist') }}" method="POST" style="display: inline;">
+                <input type="hidden" name="song_id" value="{{ song['SongID'] }}">
+                <button type="submit" style="background: none; color: #0366d6; border: none; cursor: pointer; text-decoration: underline;">
+                    {{ song["Title"] }}
+                </button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No songs available for this artist.</p>
+    {% endif %}
+</section>
 
         <!-- Follow Artist Button -->
         <form action="{{ url_for('follow_artist') }}" method="POST">
