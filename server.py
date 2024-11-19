@@ -493,7 +493,6 @@ def follow_artist():
 
 #add playlist function
 @app.route('/add_to_playlist/<string:song_title>', methods=["POST"])
-@app.route('/add_to_playlist/<string:song_title>', methods=["POST"])
 def add_to_playlist(song_title):
     if 'username' not in session:
         flash("You must be logged in to add songs to your playlist.", "danger")
@@ -509,11 +508,21 @@ def add_to_playlist(song_title):
         """), {'username': username}).fetchone()
 
         if not playlist:
-            # Default playlist not found; handle this edge case explicitly
-            flash("Default playlist not found. Please contact support.", "danger")
-            return redirect(request.referrer)
-
-        playlist_id = playlist[0]  # Get the existing playlist ID
+            # Default playlist not found, create it
+            default_playlist_id = f"PL-{username[:5]}-{str(uuid.uuid4())[:5]}"
+            g.conn.execute(text("""
+                INSERT INTO user_playlists (playlistid, playlistname, description, username, since)
+                VALUES (:playlistid, :playlistname, :description, :username, CURRENT_DATE)
+            """), {
+                'playlistid': default_playlist_id,
+                'playlistname': 'My Playlist',
+                'description': 'Default playlist',
+                'username': username
+            })
+            g.conn.commit()
+            playlist_id = default_playlist_id
+        else:
+            playlist_id = playlist[0]  # Get the existing playlist ID
 
         # Fetch the song ID using the song title
         song = g.conn.execute(text("""
@@ -551,8 +560,6 @@ def add_to_playlist(song_title):
         flash("An unexpected error occurred. Please try again later.", "danger")
     
     return redirect(request.referrer)
-
-
 
 
 if __name__ == "__main__":
