@@ -23,9 +23,8 @@
     <ul>
         {% for artist in results.artists %}
         <li>
-            <!-- Button for Artist Profile -->
-            <form method="GET" action="{{ url_for('artist_profile', artist_id=artist.ArtistID) }}" style="display: inline;">
-                <button type="submit">{{ artist.ArtistName }}'s Profile</button>
+            <form method="GET" action="{{ url_for('artist_profile', artist_id=artist['ArtistID']) }}" style="display: inline;">
+                <button type="submit">{{ artist['ArtistName'] }}'s Profile</button>
             </form>
         </li>
         {% endfor %}
@@ -40,9 +39,8 @@
     <ul>
         {% for user in results.users %}
         <li>
-            <!-- Button for User Profile -->
-            <form method="GET" action="{{ url_for('user_profile_view', username=user.Username) }}" style="display: inline;">
-                <button type="submit">{{ user.Username }}'s Profile</button>
+            <form method="GET" action="{{ url_for('user_profile_view', username=user['Username']) }}" style="display: inline;">
+                <button type="submit">{{ user['Username'] }}'s Profile</button>
             </form>
         </li>
         {% endfor %}
