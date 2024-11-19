@@ -481,44 +481,32 @@ def follow_artist():
     return redirect(request.referrer)
 
 #add playlist function
-@app.route('/add_to_playlist/<string:song_id>', methods=["POST"])
+@app.route('/add_to_playlist/<song_id>', methods=['POST'])
 def add_to_playlist(song_id):
     if 'username' not in session:
-        flash("You must be logged in to add songs to a playlist.", "danger")
-        return redirect('/login')
+        return jsonify({"success": False, "message": "You must be logged in to add songs to a playlist."}), 401
 
     username = session['username']
 
     try:
-        # Check if the user has a default playlist
-        playlist = g.conn.execute(text("""
-            SELECT playlistid FROM user_playlists WHERE username = :username LIMIT 1
-        """), {"username": username}).fetchone()
+        # Check if the song is already in the playlist
+        existing_entry = g.conn.execute(text("""
+            SELECT * FROM favorites WHERE username = :username AND songid = :songid
+        """), {"username": username, "songid": song_id}).fetchone()
 
-        if not playlist:
-            # If no playlist exists, create a default playlist
-            playlist_id = f"{username}_default"
+        if not existing_entry:
+            # Insert the song into the user's playlist
             g.conn.execute(text("""
-                INSERT INTO user_playlists (playlistid, playlistname, username)
-                VALUES (:playlist_id, 'Default Playlist', :username)
-            """), {"playlist_id": playlist_id, "username": username})
+                INSERT INTO favorites (username, songid)
+                VALUES (:username, :songid)
+            """), {"username": username, "songid": song_id})
+            g.conn.commit()
+            return jsonify({"success": True}), 200
         else:
-            playlist_id = playlist[0]
-
-        # Add the song to the playlist
-        g.conn.execute(text("""
-            INSERT INTO contains (playlistid, songid)
-            VALUES (:playlist_id, :song_id)
-            ON CONFLICT DO NOTHING
-        """), {"playlist_id": playlist_id, "song_id": song_id})
-
-        g.conn.commit()
-        flash("The song was added to your playlist!", "success")
+            return jsonify({"success": False, "message": "Song is already in your playlist."}), 400
     except Exception as e:
-        print(f"Error adding song to playlist: {e}")
-        flash("An error occurred. Please try again.", "danger")
-
-    return redirect(request.referrer)
+        print(f"Error adding to playlist: {e}")
+        return jsonify({"success": False, "message": "An unexpected error occurred."}), 500
 
 
 if __name__ == "__main__":
