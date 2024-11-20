@@ -438,7 +438,34 @@ def user_profile():
         flash("Error loading profile information", "info")
         return redirect('/dashboard')
 
-@app.route('/remove_favorite', methods=['POST'])
+#remove followed artists
+@app.route('/remove_artist/<string:artist_id>', methods=["POST"])
+def remove_artist(artist_id):
+    if 'username' not in session:
+        flash("You must be logged in to remove an artist.", "danger")
+        return redirect('/login')
+
+    username = session['username']
+
+    try:
+        # Delete the follow relationship
+        g.conn.execute(text("""
+            DELETE FROM follows
+            WHERE username = :username AND artistid = :artist_id
+        """), {
+            'username': username,
+            'artist_id': artist_id
+        })
+        g.conn.commit()
+        flash("Artist successfully removed from your following list.", "success")
+    except Exception as e:
+        print(f"Error removing artist: {e}")
+        flash("An unexpected error occurred. Please try again.", "danger")
+
+    return redirect(url_for('user_profile'))
+
+
+
 @app.route('/remove_favorite', methods=['POST'])
 def remove_favorite():
     if 'username' not in session:
