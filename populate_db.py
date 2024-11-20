@@ -50,14 +50,14 @@ def clear_tables(conn):
         print(f"Error clearing tables: {str(e)}")
         conn.rollback()
 
-def insert_artist(conn, artist_id, artist_name):
+def insert_artist(conn, artist_id, artist_name, monthly_listeners, main_genre):
     """Insert artist if not exists"""
     try:
         conn.execute(text("""
-            INSERT INTO artists (artistid, artistname)
-            VALUES (:id, :name)
+            INSERT INTO artists (artistid, artistname, monthlylisteners, maingenre)
+            VALUES (:id, :name, :monthly_listeners, :main_genre)
             ON CONFLICT (artistid) DO NOTHING;
-        """), {'id': artist_id, 'name': artist_name})
+        """), {'id': artist_id, 'name': artist_name, 'monthly_listeners': monthly_listeners, 'main_genre': main_genre})
     except Exception as e:
         print(f"Error inserting artist {artist_name}: {str(e)}")
 
@@ -170,7 +170,9 @@ def populate_database():
                 for artist in artists:
                     artist_id = artist['id']
                     artist_name = artist['name']
-                    insert_artist(conn, artist_id, artist_name)
+                    artist_monthly_listeners = sp.artist(artist_id)['followers']['total']
+                    artist_main_genre = sp.artist(artist_id)['genres'][0]
+                    insert_artist(conn, artist_id, artist_name, artist_monthly_listeners, artist_main_genre)
 
                 # Insert album
                 insert_album(conn, album_id, album_title, release_date)
