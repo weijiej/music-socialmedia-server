@@ -94,9 +94,21 @@
                                     padding: 15px; 
                                     border-radius: 8px;
                                     background-color: #f6f8fa;
-                                    min-width: 200px;">
-                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ playlist.PlaylistName }}</h3>
-                            <p style="color: #586069; margin: 5px 0;">Created {{ playlist.Since.strftime('%Y-%m-%d') }}</p>
+                                    min-width: 250px;
+                                    cursor: pointer;
+                                    transition: transform 0.2s, box-shadow 0.2s;"
+                             onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'"
+                             onmouseout="this.style.transform='none';this.style.boxShadow='none'">
+                            <a href="{{ url_for('playlist_overview', playlist_id=playlist.PlaylistID) }}"
+                               style="text-decoration: none;">
+                                <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ playlist.PlaylistName }}</h3>
+                                <p style="color: #586069; margin: 5px 0;">Created {{ playlist.Since.strftime('%Y-%m-%d') }}</p>
+                                <div style="display: flex; gap: 10px; margin-top: 8px; font-size: 12px;">
+                                    <span style="color: #0366d6; background: #f1f8ff; padding: 2px 6px; border-radius: 10px;">
+                                        View Details →
+                                    </span>
+                                </div>
+                            </a>
                         </div>
                         {% endfor %}
                     </div>
@@ -106,29 +118,30 @@
             </div>
         </div>
     
-       <!-- Followed Artists Section -->
+        <!-- Followed Artists Section -->
         <div style="margin-bottom: 40px;">
             <h2 style="color: #24292e; margin-bottom: 20px;">Artists You Follow</h2>
             <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
                 {% if artists %}
-                <div style="display: inline-flex; gap: 15px;">
-                    {% for artist in artists %}
-                    <div style="border: 1px solid #e1e4e8;
-                        padding: 15px;
-                        border-radius: 8px;
-                        background-color: #f6f8fa;
-                        min-width: 200px; text-align: center;">
-                        <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ artist.ArtistName }}</h3>
-                        <form action="{{ url_for('remove_artist', artist_id=artist.ArtistID) }}" method="POST" style="margin-top: 10px;">
-                            <button type="submit" style="background-color: #d9534f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                                Remove
-                            </button>
-                        </form>
+                    <div style="display: inline-flex; gap: 15px;">
+                        {% for artist in artists %}
+                        <div style="border: 1px solid #e1e4e8;
+                                    padding: 15px;
+                                    border-radius: 8px;
+                                    background-color: #f6f8fa;
+                                    min-width: 200px; text-align: center;">
+                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ artist.ArtistName }}</h3>
+                            <form action="{{ url_for('remove_artist', artist_id=artist.ArtistID) }}" method="POST" style="margin-top: 10px;">
+                                <button type="submit" 
+                                        style="background-color: #d9534f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                                    Remove
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
                 {% else %}
-                <p style="color: #586069;">Not following any artists yet.</p>
+                    <p style="color: #586069;">Not following any artists yet.</p>
                 {% endif %}
             </div>
         </div>
