@@ -290,14 +290,14 @@ def like_comment(comment_id, song_id):
         user_liked = g.conn.execute(text("""
             SELECT *
             FROM likes
-            WHERE username = :user
-        """), {'user': session['username']}).fetchone()
+            WHERE username = :user AND commentid = :commentid
+        """), {'user': session['username'], 'commentid': comment_id}).fetchone()
 
         if user_liked: #Delete the like
             g.conn.execute(text("""
                 DELETE FROM likes
-                WHERE username = :username
-            """), {'username': session['username']})
+                WHERE username = :username AND commentid = :commentid
+            """), {'username': session['username'], 'commentid': comment_id})
 
             g.conn.execute(text("""
                 UPDATE posted_comment_reviews
@@ -793,10 +793,9 @@ def playlist_overview(playlist_id, page=1):
     try:
         current_user = session['username']
         
-        # Get playlist details with song count
+        # Get playlist details, if accessible
         playlist = g.conn.execute(text("""
-            SELECT up.playlistid, up.playlistname, up.description, 
-                   up.publicstatus, up.since, up.username, up.totalsongs
+            SELECT up.playlistid, up.playlistname, up.description, up.publicstatus, up.since, up.username, up.totalsongs
             FROM user_playlists up
             WHERE up.playlistid = :playlist_id
             AND (up.username = :username OR up.publicstatus = true)
