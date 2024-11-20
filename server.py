@@ -402,6 +402,8 @@ def search():
 #seperate route viewing other's profile
 @app.route('/user/<username>', methods=["GET"])
 def user_profile_view(username):
+    is_own_profile = 'username' in session and session['username'].strip() == username.strip()
+
     user = g.conn.execute(text(
         "SELECT Username FROM Users WHERE Username ILIKE :username"
     ), {"username": username}).fetchone()
@@ -435,7 +437,7 @@ def user_profile_view(username):
     followed_artists = [{"ArtistID": row[0], "ArtistName": row[1], "Since": row[2]} for row in followed_artists]
     favorited_songs = [{"SongID": row[0], "Title": row[1], "ArtistName": row[2]} for row in favorited_songs]
 
-    return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs)
+    return render_template('user_profile.html', username=username, playlists=playlists, artists=followed_artists, favorites=favorited_songs, is_own_profile=is_own_profile)
 
 #user profile
 @app.route('/profile')
@@ -500,14 +502,13 @@ def user_profile():
                 'ArtistName': song[2]
             })
             
-        return render_template('user_profile.html', username=username, playlists=playlists_list, artists=artists_list, favorites=favorites_list)
+        return render_template('user_profile.html', username=username, playlists=playlists_list, artists=artists_list, favorites=favorites_list, is_own_profile=true)
 
     except Exception as e:
         print(f"Error loading profile data: {e}")
         flash("Error loading profile information", "info")
         return redirect('/dashboard')
 
-@app.route('/remove_favorite', methods=['POST'])
 @app.route('/remove_favorite', methods=['POST'])
 def remove_favorite():
     if 'username' not in session:
