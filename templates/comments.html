@@ -36,11 +36,23 @@
                 <div style="border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-radius: 8px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <strong>{{ comment.username }}</strong>
-                        <span style="color: #666;">{{ comment.date_created.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <span style="color: #666;">{{ comment.date_created.strftime('%Y-%m-%d') }}</span>
                     </div>
                     <p style="margin: 10px 0;">{{ comment.comment_text }}</p>
-                    <div style="color: #666;">
-                        {{ comment.likes }} likes
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #666;">{{ comment.likes }} likes</span>
+                        <div>
+                            <!-- Like Comment -->
+                            <form action="{{ url_for('like_comment', comment_id=comment.commentid, song_id=song.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Like</button>
+                            </form>
+                            <!-- Delete Comment -->
+                            {% if comment.username.strip() == current_user.strip() %}
+                            <form action="{{ url_for('delete_comment', comment_id=comment.commentid, song_id=song.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -48,7 +60,7 @@
                 <p>No comments yet.</p>
             {% endif %}
         </div>
-    
+        
         <!-- Add Comment Form -->
         <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
             <h3>Add a Comment</h3>
