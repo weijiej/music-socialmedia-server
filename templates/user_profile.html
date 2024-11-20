@@ -106,38 +106,29 @@
             </div>
         </div>
     
-        <!-- Followed Artists Section -->
+       <!-- Followed Artists Section -->
         <div style="margin-bottom: 40px;">
-            <h2 style="color: #24292e; margin-bottom: 20px;">Followed Artists</h2>
+            <h2 style="color: #24292e; margin-bottom: 20px;">Artists You Follow</h2>
             <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
                 {% if artists %}
-                    <div style="display: inline-flex; gap: 15px;">
-                        {% for artist in artists %}
-                        <div style="border: 1px solid #e1e4e8;
-                                    padding: 15px;
-                                    border-radius: 8px;
-                                    background-color: #f6f8fa;
-                                    min-width: 200px;">
-                            <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ artist.ArtistName }}</h3>
-                             <!-- Button to unfavorite a song -->
-                            <form action="{{ url_for('remove_followed') }}" method="POST" style="margin-top: 10px;">
-                                <input type="hidden" name="artist_id" value="{{ artist.ArtistID }}">
-                                <button type="submit" 
-                                    style="background-color: #dc3545;
-                                           color: white;
-                                           border: none;
-                                           padding: 4px 8px;
-                                           border-radius: 4px;
-                                           cursor: pointer;
-                                           font-size: 12px;">
-                                    Remove
-                                </button>
-                            </form>
-                        </div>
-                        {% endfor %}
+                <div style="display: inline-flex; gap: 15px;">
+                    {% for artist in artists %}
+                    <div style="border: 1px solid #e1e4e8;
+                        padding: 15px;
+                        border-radius: 8px;
+                        background-color: #f6f8fa;
+                        min-width: 200px; text-align: center;">
+                        <h3 style="margin: 0; color: #24292e; white-space: normal; font-size: 16px;">{{ artist.ArtistName }}</h3>
+                        <form action="{{ url_for('remove_artist', artist_id=artist.ArtistID) }}" method="POST" style="margin-top: 10px;">
+                            <button type="submit" style="background-color: #d9534f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                                Remove
+                            </button>
+                        </form>
                     </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                    <p style="color: #586069;">Not following any artists yet.</p>
+                <p style="color: #586069;">Not following any artists yet.</p>
                 {% endif %}
             </div>
         </div>
