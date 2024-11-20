@@ -47,7 +47,6 @@ def teardown_request(exception):
 
 #our code:
 
-
 #initial page
 @app.route('/')
 def index():
@@ -227,7 +226,7 @@ def view_comments(song_id):
             "username": comment[4]
         })
     
-    return render_template("comments.html", song=song, comments=all_comments)
+    return render_template("comments.html", song=song, comments=all_comments, current_user=session['username'])
 
 @app.route('/song/<string:song_id>/comment', methods=['POST'])
 def add_comment(song_id):
@@ -274,12 +273,82 @@ def add_comment(song_id):
 
     return redirect(url_for('view_comments', song_id=song_id))
   
-#artist's profile page
+@app.route('/like_comment/<comment_id>/<song_id>', methods=['POST'])
+def like_comment(comment_id, song_id):
+    try:
+        #Check if the user has already liked
+        user_liked = g.conn.execute(text("""
+            SELECT *
+            FROM likes
+            WHERE username = :user
+        """), {'user': session['username']}).fetchone()
+
+        if user_liked: #Delete the like
+            g.conn.execute(text("""
+                DELETE FROM likes
+                WHERE username = :username
+            """), {'username': session['username']})
+
+            g.conn.execute(text("""
+                UPDATE posted_comment_reviews
+                SET likes = likes - 1
+                WHERE commentid = :commentid
+            """), {'commentid': comment_id})
+
+            g.conn.commit()
+            flash('Like Removed!', 'success')
+
+        else: #Add a like
+            #insert like into database:
+            g.conn.execute(text("""
+                INSERT INTO likes (username, commentid)
+                VALUES (:username, :commentid)
+            """), {
+                'username': session['username'],
+                'commentid': comment_id
+            })
+
+            g.conn.execute(text("""
+                UPDATE posted_comment_reviews
+                SET likes = likes + 1
+                WHERE commentid = :commentid
+            """), {
+                'commentid': comment_id
+            })
+
+            g.conn.commit()
+            flash('Comment liked!', 'success')
+
+    except Exception as e:
+        flash(f'Error liking comment: {e}', 'danger')
+    
+    return redirect(url_for('view_comments', song_id=song_id))
+
+# Delete a comment
+@app.route('/delete_comment/<comment_id>/<song_id>', methods=['POST'])
+def delete_comment(comment_id, song_id):
+    username = session['username']
+    try:
+        # Only delete the comment if it belongs to the current user
+        g.conn.execute(text("""
+            DELETE FROM posted_comment_reviews
+            WHERE commentid = :commentid AND username = :username
+        """), {
+            'commentid': comment_id,
+            'username': username
+        })
+        g.conn.commit()
+        flash('Comment deleted!', 'success')
+
+    except Exception as e:
+        flash(f'Error deleting comment: {e}', 'danger')
+    return redirect(url_for('view_comments', song_id=song_id))
+
 @app.route('/artist/<artist_id>', methods=["GET"])
 def artist_profile(artist_id):
     # Fetch artist details by ID
     artist = g.conn.execute(text(
-        "SELECT ArtistName, ArtistBio, Country FROM Artists WHERE ArtistID = :artist_id"
+        "SELECT artistName, monthlylisteners, maingenre FROM Artists WHERE ArtistID = :artist_id"
     ), {"artist_id": artist_id}).fetchone()
 
     if not artist:
@@ -287,8 +356,8 @@ def artist_profile(artist_id):
 
     artist_dict = {
         "ArtistName": artist[0],
-        "ArtistBio": artist[1],
-        "Country": artist[2]
+        "MonthlyListeners": artist[1],
+        "MainGenre": artist[2]
     }
 
     #get the songs created by the artist
@@ -438,34 +507,7 @@ def user_profile():
         flash("Error loading profile information", "info")
         return redirect('/dashboard')
 
-#remove followed artists
-@app.route('/remove_artist/<string:artist_id>', methods=["POST"])
-def remove_artist(artist_id):
-    if 'username' not in session:
-        flash("You must be logged in to remove an artist.", "danger")
-        return redirect('/login')
-
-    username = session['username']
-
-    try:
-        # Delete the follow relationship
-        g.conn.execute(text("""
-            DELETE FROM follows
-            WHERE username = :username AND artistid = :artist_id
-        """), {
-            'username': username,
-            'artist_id': artist_id
-        })
-        g.conn.commit()
-        flash("Artist successfully removed from your following list.", "success")
-    except Exception as e:
-        print(f"Error removing artist: {e}")
-        flash("An unexpected error occurred. Please try again.", "danger")
-
-    return redirect(url_for('user_profile'))
-
-
-
+@app.route('/remove_favorite', methods=['POST'])
 @app.route('/remove_favorite', methods=['POST'])
 def remove_favorite():
     if 'username' not in session:
@@ -555,52 +597,119 @@ def follow_artist():
     # Stay on the same artist profile page
     return redirect(request.referrer)
 
-#add playlist function
-@app.route('/add_to_playlist/<string:song_title>', methods=["POST"])
-def add_to_playlist(song_title):
+#add to user's playlist
+@app.route('/add_to_playlist/<string:playlist_id>/<string:song_id>', methods=["POST"])
+def add_to_playlist(playlist_id, song_id):
     if 'username' not in session:
-        flash("You must be logged in to add songs to your playlist.", "danger")
         return redirect('/login')
 
     username = session['username']
     
     try:
-        # Fetch the song ID using the song title
-        song = g.conn.execute(text("""
-            SELECT songid FROM songs WHERE title = :title
-        """), {"title": song_title}).fetchone()
+        # Verify playlist exists and belongs to user
+        playlist = g.conn.execute(text("""
+            SELECT playlistname 
+            FROM user_playlists 
+            WHERE playlistid = :playlist_id AND username = :username
+        """), {
+            "playlist_id": playlist_id,
+            "username": username
+        }).fetchone()
         
-        if not song:
-            flash("Song not found.", "danger")
+        if not playlist:
+            flash("Playlist not found or access denied.", "danger")
             return redirect(request.referrer)
 
-        song_id = song[0]
-
-        # Check if the song is already in the user's playlist
-        existing_entry = g.conn.execute(text("""
-            SELECT * FROM favorites WHERE username = :username AND songid = :song_id
+        # Check if song already exists in playlist
+        existing = g.conn.execute(text("""
+            SELECT *
+            FROM contains c
+            WHERE playlistid = :playlist_id AND songid = :song_id
         """), {
-            "username": username,
+            "playlist_id": playlist_id,
             "song_id": song_id
         }).fetchone()
 
-        if existing_entry:
-            flash(f"'{song_title}' is already in your playlist.", "info")
+        if existing:
+            flash("Song is already in the playlist.", "info")
         else:
-            # Add the song to the user's playlist
+            # Add song to playlist
             g.conn.execute(text("""
-                INSERT INTO favorites (username, songid) VALUES (:username, :song_id)
+                INSERT INTO contains (playlistid, songid) 
+                VALUES (:playlist_id, :song_id)
             """), {
-                "username": username,
+                "playlist_id": playlist_id,
                 "song_id": song_id
             })
+            
+            # Update totalsongs count
+            g.conn.execute(text("""
+                UPDATE user_playlists 
+                SET totalsongs = totalsongs + 1 
+                WHERE playlistid = :playlist_id
+            """), {
+                "playlist_id": playlist_id
+            })
+            
             g.conn.commit()
-            flash(f"'{song_title}' was added to your playlist!", "success")
+            flash("Song added to playlist successfully!", "success")
+            
     except Exception as e:
         print(f"Error adding song to playlist: {e}")
-        flash("An unexpected error occurred. Please try again later.", "danger")
+        flash("An error occurred while adding the song.", "danger")
     
-    return redirect(request.referrer)
+    return redirect(url_for('playlist_overview', playlist_id=playlist_id))
+
+#delete a song from playlist
+@app.route('/delete_from_playlist/<string:playlist_id>/<string:song_id>', methods=["POST"])
+def delete_from_playlist(playlist_id, song_id):
+    if 'username' not in session:
+        return redirect('/login')
+
+    username = session['username']
+    
+    try:
+        # Verify playlist exists and belongs to user
+        playlist = g.conn.execute(text("""
+            SELECT playlistname 
+            FROM user_playlists 
+            WHERE playlistid = :playlist_id AND username = :username
+        """), {
+            "playlist_id": playlist_id,
+            "username": username
+        }).fetchone()
+        
+        if not playlist:
+            flash("Playlist not found or access denied.", "danger")
+            return redirect(request.referrer)
+
+        # Delete song from playlist
+        g.conn.execute(text("""
+            DELETE FROM contains 
+            WHERE playlistid = :playlist_id AND songid = :song_id
+        """), {
+            "playlist_id": playlist_id,
+            "song_id": song_id
+        })
+        
+        # Update totalsongs count
+        g.conn.execute(text("""
+            UPDATE user_playlists 
+            SET totalsongs = totalsongs - 1 
+            WHERE playlistid = :playlist_id
+        """), {
+            "playlist_id": playlist_id
+        })
+        
+        g.conn.commit()
+        flash("Song removed from playlist successfully!", "success")
+            
+    except Exception as e:
+        print(f"Error removing song from playlist: {e}")
+        flash("An error occurred while removing the song.", "danger")
+    
+    return redirect(url_for('playlist_overview', playlist_id=playlist_id))
+
 
 @app.route('/create_playlist', methods=['GET', 'POST'])
 def create_playlist():
@@ -660,6 +769,141 @@ def create_playlist():
         flash("Error creating playlist. Please try again.", "info")
         return redirect(url_for('create_playlist'))
 
+@app.route('/playlist/<string:playlist_id>')
+def playlist_overview(playlist_id):
+    if 'username' not in session:
+        return redirect('/login')
+        
+    try:
+        current_user = session['username']
+        
+        # Get playlist details with song count
+        playlist = g.conn.execute(text("""
+            SELECT up.playlistid, up.playlistname, up.description, 
+                   up.publicstatus, up.since, up.username, up.totalsongs
+            FROM user_playlists up
+            WHERE up.playlistid = :playlist_id
+            AND (up.username = :username OR up.publicstatus = true)
+        """), {
+            "playlist_id": playlist_id,
+            "username": current_user
+        }).fetchone()
+        
+        if not playlist:
+            flash("Playlist not found or access denied.", "info")
+            return redirect(url_for('user_profile'))
+            
+        playlist_info = {
+            'id': playlist[0],
+            'name': playlist[1],
+            'description': playlist[2],
+            'public_status': playlist[3],
+            'created_at': playlist[4],
+            'owner': playlist[5],
+            'total_songs': playlist[6],
+            'is_owner': current_user.strip() == playlist[5].strip()  # Added strip() to handle any whitespace
+        }
+        
+        # Get Songs info in playlist
+        playlist_songs = g.conn.execute(text("""
+            SELECT s.songid, s.title, a.artistname, s.duration_in_seconds
+            FROM contains c JOIN songs s ON c.songid = s.songid
+            JOIN released_under ru ON s.songid = ru.songid
+            JOIN artists a ON ru.artistid = a.artistid
+            WHERE c.playlistid = :playlist_id
+            ORDER BY s.title
+        """), {
+            "playlist_id": playlist_id
+        }).fetchall()
+        
+        songs_in_playlist = [{
+            'id': s[0], 
+            'title': s[1], 
+            'artist': s[2],
+            'duration': s[3]
+        } for s in playlist_songs]
+        
+        # Possible songs the user can add to playlist, limit of 20 to prevent overflow
+        available_songs = g.conn.execute(text("""
+            SELECT DISTINCT s.songid, s.title, a.artistname
+            FROM songs s 
+            JOIN released_under ru ON s.songid = ru.songid
+            JOIN artists a ON ru.artistid = a.artistid
+            WHERE s.songid NOT IN (
+                SELECT c.songid
+                FROM contains c
+                WHERE c.playlistid = :playlist_id
+            )
+            ORDER BY s.title
+            LIMIT 20
+        """), {
+            "playlist_id": playlist_id
+        }).fetchall()
+        
+        available_songs_list = [{
+            'id': s[0], 
+            'title': s[1], 
+            'artist': s[2]
+        } for s in available_songs]
+        
+        return render_template(
+            'playlist_overview.html',
+            playlist=playlist_info,
+            playlist_songs=songs_in_playlist,
+            available_songs=available_songs_list
+        )
+                             
+    except Exception as e:
+        print(f"Error loading playlist: {e}")
+        flash("Error loading playlist information", "info")
+        return redirect(url_for('user_profile'))
+
+@app.route('/delete_playlist/<string:playlist_id>', methods=["POST"])
+def delete_playlist(playlist_id):
+    if 'username' not in session:
+        return redirect('/login')
+        
+    username = session['username']
+    
+    # Delete the playlist if it belongs to the current user
+    g.conn.execute(text("""
+        DELETE FROM user_playlists 
+        WHERE playlistid = :playlist_id AND username = :username
+    """), {
+        "playlist_id": playlist_id,
+        "username": username
+    })
+    
+    g.conn.commit()
+    flash("Playlist deleted successfully", "success")
+    return redirect(url_for('user_profile'))
+
+#remove followed artists
+@app.route('/remove_artist/<string:artist_id>', methods=["POST"])
+def remove_artist(artist_id):
+    if 'username' not in session:
+        flash("You must be logged in to remove an artist.", "danger")
+        return redirect('/login')
+
+    username = session['username']
+
+    try:
+        # Delete the follow relationship
+        g.conn.execute(text("""
+            DELETE FROM follows
+            WHERE username = :username AND artistid = :artist_id
+        """), {
+            'username': username,
+            'artist_id': artist_id
+        })
+        g.conn.commit()
+        flash("Artist successfully removed from your following list.", "success")
+    except Exception as e:
+        print(f"Error removing artist: {e}")
+        flash("An unexpected error occurred. Please try again.", "danger")
+
+    return redirect(url_for('user_profile'))
+        
 if __name__ == "__main__":
   import click
 
