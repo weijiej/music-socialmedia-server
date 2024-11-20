@@ -112,6 +112,10 @@ def dashboard():
     current_user = session['username']
 
     #query for distinct songs not currently favorited by user
+    page = request.args.get('page', 0, type=int)
+    page_size = 20 #how many songs per page
+    offset = page_size * page #will be used in query
+
     #returns the song title and its respective artist
     songs = g.conn.execute(text("""
         SELECT DISTINCT s.songid, s.title, a.artistname
@@ -122,11 +126,17 @@ def dashboard():
             FROM favorites f
             WHERE f.username = :username
         )
-        LIMIT 20
+        LIMIT :limit
+        OFFSET :offset
         """), {
-            'username':current_user
+            'username':current_user,
+            'limit': page_size + 1, #used for checking end of database
+            'offset': offset
         }).fetchall()
     
+    has_more = len(songs) > page_size
+    songs = songs[:page_size] #remove the extra song
+
     #list to store song information
     posts = []
     for song in songs:
@@ -136,7 +146,7 @@ def dashboard():
             'artist_name': song[2]
         })
 
-    return render_template("dashboard.html", user=session['username'], posts=posts)
+    return render_template("dashboard.html", user=session['username'], posts=posts, current_page=page, has_more=has_more)
 
 @app.route('/add_favorite', methods = ["POST"])
 def add_favorite():
@@ -775,7 +785,8 @@ def create_playlist():
         return redirect(url_for('create_playlist'))
 
 @app.route('/playlist/<string:playlist_id>')
-def playlist_overview(playlist_id):
+@app.route('/playlist/<string:playlist_id>/page/<int:page>')
+def playlist_overview(playlist_id, page=1):
     if 'username' not in session:
         return redirect('/login')
         
@@ -828,7 +839,10 @@ def playlist_overview(playlist_id):
             'duration': s[3]
         } for s in playlist_songs]
         
-        # Possible songs the user can add to playlist, limit of 20 to prevent overflow
+        # Calculate offset based on page number
+        offset = (page - 1) * 20
+        
+        # Get available songs, limit by 21 to check if theres more after the 20th song
         available_songs = g.conn.execute(text("""
             SELECT DISTINCT s.songid, s.title, a.artistname
             FROM songs s 
@@ -839,11 +853,17 @@ def playlist_overview(playlist_id):
                 FROM contains c
                 WHERE c.playlistid = :playlist_id
             )
-            ORDER BY s.title
-            LIMIT 20
+            OFFSET :offset
+            LIMIT 21
         """), {
-            "playlist_id": playlist_id
+            "playlist_id": playlist_id,
+            "offset": offset
         }).fetchall()
+        
+        # Check if there are more songs after this page
+        has_more = len(available_songs) > 20
+        # Only take the first 20 songs for display
+        available_songs = available_songs[:20]
         
         available_songs_list = [{
             'id': s[0], 
@@ -851,12 +871,7 @@ def playlist_overview(playlist_id):
             'artist': s[2]
         } for s in available_songs]
         
-        return render_template(
-            'playlist_overview.html',
-            playlist=playlist_info,
-            playlist_songs=songs_in_playlist,
-            available_songs=available_songs_list
-        )
+        return render_template('playlist_overview.html', playlist=playlist_info, playlist_songs=songs_in_playlist, available_songs=available_songs_list, current_page=page, has_more=has_more)
                              
     except Exception as e:
         print(f"Error loading playlist: {e}")

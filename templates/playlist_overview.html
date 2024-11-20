@@ -274,27 +274,59 @@
 
         <!-- Add Songs Section (only visible to owner) -->
         {% if playlist.is_owner %}
-            <div class="song-list">
-                <h2 class="section-title">Add Songs to Playlist</h2>
-                {% if available_songs %}
-                    {% for song in available_songs %}
-                        <div class="song-item">
-                            <div class="song-info">
-                                <strong>{{ song.title }}</strong>
-                                <span style="color: #666;"> - {{ song.artist }}</span>
-                            </div>
-                            <div class="song-controls">
-                                <form action="{{ url_for('add_to_playlist', playlist_id=playlist.id, song_id=song.id) }}" method="POST" style="display: inline;">
-                                    <button type="submit" class="add-btn">Add</button>
-                                </form>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p>No more songs available to add.</p>
-                {% endif %}
+<div class="song-list">
+    <h2 class="section-title">Add Songs to Playlist</h2>
+    <div id="available-songs">
+        {% if available_songs %}
+            {% for song in available_songs %}
+            <div class="song-item">
+                <div class="song-info">
+                    <strong>{{ song.title }}</strong>
+                    <span style="color: #666;"> - {{ song.artist }}</span>
+                </div>
+                <div class="song-controls">
+                    <form action="{{ url_for('add_to_playlist', playlist_id=playlist.id, song_id=song.id) }}" method="POST">
+                        <button type="submit" class="btn btn-sm btn-primary">Add</button>
+                    </form>
+                </div>
             </div>
+            {% endfor %}
+            
+            {% if has_more %}
+            <div class="load-more-container">
+                <a href="{{ url_for('playlist_overview', playlist_id=playlist.id, page=(current_page or 1) + 1) }}" 
+                   class="load-more-btn">Load More Songs</a>
+            </div>
+            {% endif %}
+        {% else %}
+            <p>No more songs available to add.</p>
         {% endif %}
+    </div>
+</div>
+
+<style>
+.load-more-container {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.load-more-btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.load-more-btn:hover {
+    background-color: #e0e0e0;
+    text-decoration: none;
+}
+</style>
+{% endif %}
     </div>
 </body>
 </html>

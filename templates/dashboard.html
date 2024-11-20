@@ -90,5 +90,22 @@
                 </div>
             {% endfor %}
         </div>
+
+        {% if has_more %}
+            <div style="width: 100%; text-align: center; margin-top: 20px;">
+                <a href="{{ url_for('dashboard', page=current_page + 1) }}" 
+                style="display: inline-block; 
+                        padding: 10px 20px; 
+                        background-color: #28a745; 
+                        color: white; 
+                        text-decoration: none; 
+                        border-radius: 4px; 
+                        font-size: 16px; 
+                        transition: background-color 0.3s ease;">
+                    Load More Songs
+                </a>
+            </div>
+        {% endif %}
+
     <body>
 </html>
