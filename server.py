@@ -402,8 +402,6 @@ def search():
 #seperate route viewing other's profile
 @app.route('/user/<username>', methods=["GET"])
 def user_profile_view(username):
-    is_own_profile = 'username' in session and session['username'].strip() == username.strip()
-
     user = g.conn.execute(text(
         "SELECT Username FROM Users WHERE Username ILIKE :username"
     ), {"username": username}).fetchone()
@@ -411,12 +409,18 @@ def user_profile_view(username):
     if not user:
         return render_template("error.html", message="User not found"), 404
 
-    # Fetch data from the database
+    is_own_profile = 'username' in session and session['username'].strip() == username.strip()
+    
+    #Query shows public playlists, or if you're looking at your own profile, all of your playlists
     playlists = g.conn.execute(text("""
         SELECT up.playlistid, up.playlistname, up.since
         FROM user_playlists up
-        WHERE up.username ILIKE :username AND up.publicstatus = true
-    """), {'username': username}).fetchall()
+        WHERE up.username = :user
+        AND (up.publicstatus = true OR :is_own_profile = true)
+    """), {
+        'user': user[0],
+        'is_own_profile': is_own_profile
+    }).fetchall()
 
     followed_artists = g.conn.execute(text("""
         SELECT f.artistid, a.artistname, f.since
