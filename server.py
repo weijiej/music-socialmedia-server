@@ -908,7 +908,62 @@ def remove_artist(artist_id):
         flash("An unexpected error occurred. Please try again.", "danger")
 
     return redirect(url_for('user_profile'))
+
+@app.route('/toggle_playlist_status/<string:playlist_id>', methods=["POST"])
+def toggle_playlist_status(playlist_id):
+    if 'username' not in session:
+        return redirect('/login')
         
+    username = session['username']
+    
+    try:
+        # First check if user owns the playlist and get current status
+        playlist_query = text("""
+            SELECT playlistid, publicstatus
+            FROM user_playlists
+            WHERE playlistid = :playlist_id AND username = :username
+        """)
+        
+        playlist = g.conn.execute(playlist_query, {
+            "playlist_id": playlist_id,
+            "username": username
+        }).fetchone()
+        
+        if not playlist:
+            print("Playlist not found or access denied")
+            flash("Playlist not found or access denied.", "danger")
+            return redirect(url_for('user_profile'))
+            
+        # Get current status and debug print
+        current_status = bool(playlist[1])  # Convert to boolean explicitly
+        new_status = not current_status
+        
+        # Update the playlist status
+        update_query = text("""
+            UPDATE user_playlists
+            SET publicstatus = :new_status
+            WHERE playlistid = :playlist_id AND username = :username
+        """)
+        
+        g.conn.execute(update_query, {
+            "playlist_id": playlist_id,
+            "username": username,
+            "new_status": new_status
+        })
+        
+        g.conn.commit()
+        status_text = "public" if new_status else "private"
+        flash(f"Playlist is now {status_text}!", "success")
+        
+    except Exception as e:
+        print(f"Error toggling playlist status: {e}")
+        print("Full error:", str(e))
+        import traceback
+        traceback.print_exc()
+        flash("An error occurred while updating playlist status.", "danger")
+    
+    return redirect(url_for('playlist_overview', playlist_id=playlist_id))   
+ 
 if __name__ == "__main__":
   import click
 

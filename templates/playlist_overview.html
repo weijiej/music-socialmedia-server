@@ -1,126 +1,193 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{{ playlist.name }} - Playlist Overview</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ playlist.name }} - Playlist</title>
     <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            background-color: white;
             padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
         .back-link {
             text-decoration: none;
             color: #0366d6;
-            margin-bottom: 20px;
             display: inline-block;
+            margin-bottom: 20px;
         }
+
         .playlist-header {
-            background: #f6f8fa;
-            padding: 20px;
-            border-radius: 8px;
             margin-bottom: 30px;
-            border: 1px solid #e1e4e8;
         }
+
         .header-flex {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
+            margin-bottom: 15px;
         }
+
         .playlist-title {
-            margin: 0 0 10px 0;
-        }
-        .playlist-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-            color: #666;
-        }
-        .song-list {
-            margin: 40px 0;
-        }
-        .section-title {
+            margin: 0;
             color: #24292e;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e1e4e8;
         }
+
+        .playlist-info {
+            background-color: #f6f8fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .playlist-info > div {
+            margin: 8px 0;
+        }
+
+        .song-list {
+            margin-top: 30px;
+        }
+
         .song-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            background: #fff;
+            padding: 12px;
             border: 1px solid #e1e4e8;
-            margin: 8px 0;
             border-radius: 6px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 10px;
+            background-color: white;
         }
-        .song-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .song-info {
-            flex-grow: 1;
-        }
-        .song-controls form {
-            display: inline;
-        }
-        .btn {
+
+        .song-controls button {
             padding: 6px 12px;
-            border-radius: 6px;
+            border-radius: 4px;
             border: 1px solid;
             cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
         }
-        .btn-remove {
-            background-color: #fafbfc;
-            border-color: #e1e4e8;
-            color: #cb2431;
+
+        .remove-btn {
+            color: #dc3545;
+            background: white;
+            border-color: #dc3545;
         }
-        .btn-remove:hover {
-            background-color: #cb2431;
-            border-color: #cb2431;
+
+        .remove-btn:hover {
+            background: #dc3545;
             color: white;
         }
-        .btn-add {
-            background-color: #fafbfc;
-            border-color: #e1e4e8;
+
+        .add-btn {
             color: #28a745;
-        }
-        .btn-add:hover {
-            background-color: #28a745;
+            background: white;
             border-color: #28a745;
+        }
+
+        .add-btn:hover {
+            background: #28a745;
             color: white;
         }
-        .btn-delete-playlist {
-            background-color: #fafbfc;
-            border-color: #cb2431;
-            color: #cb2431;
-            padding: 8px 16px;
+
+        .section-title {
+            color: #24292e;
+            margin: 20px 0;
         }
-        .btn-delete-playlist:hover {
-            background-color: #cb2431;
-            color: white;
-        }
-        .flash-messages {
-            margin-bottom: 20px;
-        }
+
         .alert {
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 12px;
+            margin-bottom: 16px;
             border-radius: 4px;
         }
+
         .alert-success {
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
         }
-        .alert-info {
-            background-color: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+            margin-left: 10px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(18px);
+        }
+
+        .status-label {
+            font-size: 14px;
+            margin-right: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .delete-btn {
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #dc3545;
+            color: white;
         }
     </style>
 </head>
@@ -128,6 +195,7 @@
     <div class="container">
         <a href="{{ url_for('user_profile') }}" class="back-link">← Back to Profile</a>
 
+        <!-- Flash Messages -->
         <div class="flash-messages">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -140,25 +208,47 @@
             {% endwith %}
         </div>
 
+        <!-- Playlist Header -->
         <div class="playlist-header">
             <div class="header-flex">
                 <h1 class="playlist-title">{{ playlist.name }}</h1>
                 {% if playlist.is_owner %}
-                <form action="{{ url_for('delete_playlist', playlist_id=playlist.id) }}" method="POST" 
-                      onsubmit="return confirm('Are you sure you want to delete this playlist? This action cannot be undone.');">
-                    <button type="submit" class="btn btn-delete-playlist">Delete Playlist</button>
-                </form>
+                    <form action="{{ url_for('delete_playlist', playlist_id=playlist.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this playlist?')">
+                            Delete Playlist
+                        </button>
+                    </form>
                 {% endif %}
             </div>
-            <p style="margin: 0 0 15px 0; color: #666;">{{ playlist.description or 'No description provided.' }}</p>
+
+            <p>{{ playlist.description or 'No description provided.' }}</p>
+
             <div class="playlist-info">
                 <div>Created: {{ playlist.created_at.strftime('%Y-%m-%d') }}</div>
-                <div>Status: {{ 'Public' if playlist.public_status else 'Private' }}</div>
+
+                <div style="display: flex; align-items: center;">
+                    {% if playlist.is_owner %}
+                        <form action="{{ url_for('toggle_playlist_status', playlist_id=playlist.id) }}" method="POST" style="display: flex; align-items: center;">
+                            <span class="status-label">Status:</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" {% if playlist.public_status %}checked{% endif %} onclick="this.form.submit();">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="status-label" style="margin-left: 10px;">
+                                {% if playlist.public_status %}Public{% else %}Private{% endif %}
+                            </span>
+                        </form>
+                    {% else %}
+                        <div>Status: {{ 'Public' if playlist.public_status else 'Private' }}</div>
+                    {% endif %}
+                </div>
+
                 <div>Owner: {{ playlist.owner }}</div>
                 <div>Total Songs: {{ playlist.total_songs }}</div>
             </div>
         </div>
 
+        <!-- Songs in Playlist -->
         <div class="song-list">
             <h2 class="section-title">Songs in Playlist</h2>
             {% if playlist_songs %}
@@ -169,40 +259,41 @@
                             <span style="color: #666;"> - {{ song.artist }}</span>
                         </div>
                         {% if playlist.is_owner %}
-                        <div class="song-controls">
-                            <form action="{{ url_for('delete_from_playlist', playlist_id=playlist.id, song_id=song.id) }}" method="POST">
-                                <button type="submit" class="btn btn-remove">Remove</button>
-                            </form>
-                        </div>
+                            <div class="song-controls">
+                                <form action="{{ url_for('delete_from_playlist', playlist_id=playlist.id, song_id=song.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="remove-btn">Remove</button>
+                                </form>
+                            </div>
                         {% endif %}
                     </div>
                 {% endfor %}
             {% else %}
-                <p style="color: #666; text-align: center;">No songs in this playlist yet.</p>
+                <p>No songs in this playlist yet.</p>
             {% endif %}
         </div>
 
+        <!-- Add Songs Section (only visible to owner) -->
         {% if playlist.is_owner %}
-        <div class="song-list">
-            <h2 class="section-title">Add Songs to Playlist</h2>
-            {% if available_songs %}
-                {% for song in available_songs %}
-                    <div class="song-item">
-                        <div class="song-info">
-                            <strong>{{ song.title }}</strong>
-                            <span style="color: #666;"> - {{ song.artist }}</span>
+            <div class="song-list">
+                <h2 class="section-title">Add Songs to Playlist</h2>
+                {% if available_songs %}
+                    {% for song in available_songs %}
+                        <div class="song-item">
+                            <div class="song-info">
+                                <strong>{{ song.title }}</strong>
+                                <span style="color: #666;"> - {{ song.artist }}</span>
+                            </div>
+                            <div class="song-controls">
+                                <form action="{{ url_for('add_to_playlist', playlist_id=playlist.id, song_id=song.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="add-btn">Add</button>
+                                </form>
+                            </div>
                         </div>
-                        <div class="song-controls">
-                            <form action="{{ url_for('add_to_playlist', playlist_id=playlist.id, song_id=song.id) }}" method="POST">
-                                <button type="submit" class="btn btn-add">Add</button>
-                            </form>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p style="color: #666; text-align: center;">No more songs available to add.</p>
-            {% endif %}
-        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No more songs available to add.</p>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
 </body>
