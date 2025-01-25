@@ -14,8 +14,8 @@ engine = create_engine(DATABASEURI)
 
 #spotify API setup
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-    client_id="86079ffb63234fd4b6a7a17f22f463ac",
-    client_secret="87d278bfd8874a588803ba7d57f4ad5a"
+    client_id="",
+    client_secret=""
 ))
 
 @app.before_request
